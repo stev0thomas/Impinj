@@ -270,12 +270,14 @@ namespace ItemSenseRDBMService
 
                 //Next get last known threshold events and create temp table
                 GetLatestEpcFromThresholdHist();
-                //Call upsert epc master 
-                UpsertEpcMasterFromTempTable();
 
                 //Now get all last know item events and create temp table
                 GetLatestEpcFromItemEventHist();
-                //Call upsert epc master again as temp table will now have ItemEventHistory data
+
+                //Merge the two temp tables
+                MergeBothTempTables();
+
+                //Call upsert epc master 
                 UpsertEpcMasterFromTempTable();
 
                 //Now upsert the count for each upc at each location
@@ -394,11 +396,8 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{pos}') " +
-                                   @"DELETE FROM {pos} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days'; " +
-                                   @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{ship_rcv}') " +
+            const string cmdText = @"DELETE FROM {pos} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days'; " +
                                    @"DELETE FROM {ship_rcv} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days'; " +
-                                   @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{upc_inv_loc}') " +
                                    @"DELETE FROM {upc_inv_loc} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days';";
 
             string replText = cmdText.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
@@ -444,11 +443,8 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{is_raw_item_event_hist}') " +
-                                   @"DELETE FROM {is_raw_item_event_hist} WHERE current_timestamp - obsv_time > interval '{is_hist_interval} seconds'; " +
-                                   @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{is_threshold_hist}') " +
+            const string cmdText = @"DELETE FROM {is_raw_item_event_hist} WHERE current_timestamp - obsv_time > interval '{is_hist_interval} seconds'; " +
                                    @"DELETE FROM {is_threshold_hist} WHERE current_timestamp - observation_time > interval '{is_hist_interval} seconds'; " +
-                                   @"IF EXISTS (SELECT * FROM pg_table WHERE tablename='{smoothed_item_event_hist}') " +
                                    @"DELETE FROM {smoothed_item_event_hist} WHERE current_timestamp - calc_time > interval '{is_hist_interval} seconds'; ";
 
             string replText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
@@ -528,6 +524,73 @@ namespace ItemSenseRDBMService
             #endregion
         }
 
+        private static void MergeBothTempTables()
+        {
+            #region debug_MergeBothTempTables_kpi
+            DateTime blockTmSt = System.DateTime.Now;
+            log.Debug("MergeBothTempTables started: " + blockTmSt.ToLongTimeString());
+            #endregion
+
+            #region Postgresql DDL
+            //Do Not Alter - These strings are modified via the app.cfg
+            //Update History "updatedb_cmd"
+
+            string updCmdText = @"DROP TABLE IF EXISTS is_upc_tmp; " +
+                    @"CREATE TABLE is_upc_tmp (epc_nbr character varying(128) NOT NULL,  last_obsv_time timestamptz, tag_id character varying(128), " +
+                    @"zone_name character varying(128), floor character varying(128), facility character varying(128), x_coord double precision, " +
+                    @"y_coord double precision, upc_nbr character varying(24), last_updt_time timestamptz, PRIMARY KEY(epc_nbr, last_obsv_time))WITH(OIDS= FALSE); ";
+
+            const string cmdText = @"CREATE TABLE IF NOT EXISTS {is_temp_upc} (epc_nbr character varying(24) NOT NULL, last_obsv_time timestamptz, tag_id character varying(128), " +
+                    @"zone_name character varying(128), floor character varying(128), facility character varying(128), x_coord double precision, " +
+                    @"y_coord double precision, upc_nbr character varying(24), last_updt_time timestamptz, PRIMARY KEY(epc_nbr, last_obsv_time))WITH(OIDS= FALSE); " +
+                    @"INSERT INTO is_upc_tmp (epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) " +
+                    @"SELECT epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time " +
+                    @"FROM {is_temp_upc} " +
+                    @"ON CONFLICT (epc_nbr, last_obsv_time) DO UPDATE SET last_obsv_time = excluded.last_obsv_time, " +
+                    @"tag_id = excluded.tag_id, zone_name = excluded.zone_name, floor = excluded.floor, facility = excluded.facility, " +
+                    @"x_coord = excluded.x_coord, y_coord = excluded.y_coord, upc_nbr = excluded.upc_nbr, last_updt_time = excluded.last_updt_time; ";
+
+            string cfgCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_thresh");
+            string postCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_item");
+
+            #endregion
+
+            try
+            {
+                string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
+                NpgsqlConnection conn = new NpgsqlConnection(connStr);
+
+                NpgsqlCommand updatedb_cmd = new NpgsqlCommand(updCmdText, conn);
+                NpgsqlCommand mergedb_cmd = new NpgsqlCommand(cfgCmdText, conn);
+                NpgsqlCommand postdb_cmd = new NpgsqlCommand(postCmdText, conn);
+
+                conn.Open();
+
+                //First drop and create
+                updatedb_cmd.ExecuteNonQuery();
+                // Execute the merge Threshold
+                mergedb_cmd.ExecuteNonQuery();
+                // Finally merge the Item Events
+                postdb_cmd.ExecuteNonQuery();
+
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                string errMsg = "MergeBothTempTables Exception: " + ex.Message + "(" + ex.GetType() + ")";
+                if (null != ex.InnerException)
+                    errMsg += Environment.NewLine + ex.InnerException.Message;
+                log.Error(errMsg);
+            }
+
+            #region debug_MergeBothTempTables_kpi
+            DateTime procTmEnd = DateTime.Now;
+            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+            log.Debug("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString());
+            #endregion
+        }
+
         private static void UpsertEpcMasterFromTempTable()
         {
             #region debug_UpsertEpcMasterFromTempTable_kpi
@@ -539,9 +602,11 @@ namespace ItemSenseRDBMService
             //Do Not Alter - These strings are modified via the app.cfg
             //Update Epc Master History "upsertdb_cmd"
             const string postText = @"INSERT INTO {epc_master} (epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, last_updt_time, upc_nbr) " +
-                @"SELECT epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, last_updt_time, upc_nbr FROM is_upc_tmp " +
-                @"ON CONFLICT (epc_nbr) DO UPDATE SET last_obsv_time = excluded.last_obsv_time, zone_name = excluded.zone_name, floor = excluded.floor, " +
-                @"facility = excluded.facility, x_coord = excluded.x_coord, y_coord = excluded.y_coord, last_updt_time = excluded.last_updt_time; ";
+               @"SELECT t1.epc_nbr, t1.last_obsv_time, t1.tag_id, t1.zone_name, t1.floor, t1.facility, t1.x_coord, t1.y_coord, t1.last_updt_time, t1.upc_nbr FROM is_upc_tmp t1 " +
+               @"WHERE t1.last_obsv_time = (SELECT MAX(last_obsv_time) FROM is_upc_tmp t2 where t1.epc_nbr = t2.epc_nbr) " +
+               @"GROUP BY epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, last_updt_time, upc_nbr " +
+               @"ON CONFLICT (epc_nbr) DO UPDATE SET last_obsv_time = excluded.last_obsv_time, tag_id = excluded.tag_id, zone_name = excluded.zone_name, floor = excluded.floor, " +
+               @"facility = excluded.facility, x_coord = excluded.x_coord, y_coord = excluded.y_coord, last_updt_time = excluded.last_updt_time, upc_nbr = excluded.upc_nbr; ";
 
             string cfgCmdText = postText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
             #endregion
@@ -589,13 +654,13 @@ namespace ItemSenseRDBMService
 
             string cfgCmdText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
 
-            string updCmdText = @"DROP TABLE IF EXISTS is_upc_tmp; " +
-                @"CREATE TABLE is_upc_tmp (epc_nbr character varying(128) NOT NULL,  last_obsv_time timestamptz, tag_id character varying(128), " +
+            string updCmdText = @"DROP TABLE IF EXISTS is_upc_tmp_item; " +
+                @"CREATE TABLE is_upc_tmp_item (epc_nbr character varying(128) NOT NULL,  last_obsv_time timestamptz, tag_id character varying(128), " +
                 @"zone_name character varying(128), floor character varying(128), facility character varying(128), x_coord double precision, " +
                 @"y_coord double precision, upc_nbr character varying(24), last_updt_time timestamptz, PRIMARY KEY(epc_nbr))WITH(OIDS= FALSE); ";
 
             //Bulk Insert
-            string impText = @"COPY is_upc_tmp(epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) FROM STDIN WITH DELIMITER ',' CSV";
+            string impText = @"COPY is_upc_tmp_item(epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) FROM STDIN WITH DELIMITER ',' CSV";
 
             #endregion
 
@@ -682,19 +747,19 @@ namespace ItemSenseRDBMService
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
-            const string cmdText = @"SELECT i1.epc_nbr, i1.observation_time, i1.to_zone FROM {is_threshold_hist} i1 " +
+            const string cmdText = @"SELECT i1.epc_nbr, i1.observation_time, i1.threshold, i1.dock_door, i1.to_zone FROM {is_threshold_hist} i1 " +
                                    @"WHERE i1.observation_time = (SELECT MAX(observation_time) FROM {is_threshold_hist} i2 WHERE i1.epc_nbr = i2.epc_nbr) " +
-                                   @"GROUP BY epc_nbr, observation_time, to_zone; ";
+                                   @"GROUP BY epc_nbr, observation_time, threshold, dock_door, to_zone; ";
 
             string cfgCmdText = cmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
 
-            string updCmdText = @"DROP TABLE IF EXISTS is_upc_tmp; " +
-                @"CREATE TABLE is_upc_tmp (epc_nbr character varying(128) NOT NULL,  last_obsv_time timestamptz, tag_id character varying(128), " +
+            string updCmdText = @"DROP TABLE IF EXISTS is_upc_tmp_thresh; " +
+                @"CREATE TABLE is_upc_tmp_thresh (epc_nbr character varying(128) NOT NULL,  last_obsv_time timestamptz, tag_id character varying(128), " +
                 @"zone_name character varying(128), floor character varying(128), facility character varying(128), x_coord double precision, " +
                 @"y_coord double precision, upc_nbr character varying(24), last_updt_time timestamptz, PRIMARY KEY(epc_nbr))WITH(OIDS= FALSE); ";
 
             //Bulk Insert
-            string impText = @"COPY is_upc_tmp(epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) FROM STDIN WITH DELIMITER ',' CSV";
+            string impText = @"COPY is_upc_tmp_thresh(epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) FROM STDIN WITH DELIMITER ',' CSV";
 
             #endregion
 
@@ -716,8 +781,8 @@ namespace ItemSenseRDBMService
                         if (Sgtin96.IsValidSGTIN(dr[0].ToString()))
                         {
                             Sgtin96 gtin = Sgtin96.FromString(dr[0].ToString());
-                            EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
-                                string.Empty, string.Empty, string.Empty, 0, 0, gtin.ToUpc(), Convert.ToDateTime(dr[1].ToString()));
+                            EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), "ABSENT",
+                                dr[2].ToString(), dr[3].ToString(), dr[4].ToString(), 0, 0, gtin.ToUpc(), Convert.ToDateTime(dr[1].ToString()));
                             thrRecords.Add(rec);
                         }
                         else
@@ -728,8 +793,8 @@ namespace ItemSenseRDBMService
                     else
                     {
                         //Do proprietary encoding filter to upc_nbr
-                        EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
-                            dr[3].ToString(), dr[4].ToString(), dr[5].ToString(), Convert.ToDouble(dr[6]), Convert.ToDouble(dr[7]),
+                        EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), "ABSENT",
+                            dr[2].ToString(), dr[3].ToString(), dr[4].ToString(), Convert.ToDouble(dr[5]), Convert.ToDouble(dr[6]),
                             GetCustomUpc(dr[0].ToString()), Convert.ToDateTime(dr[1].ToString()));
                         itemEventRecords.Add(rec);
                     }
@@ -782,7 +847,7 @@ namespace ItemSenseRDBMService
                 @"tag_id character varying(128) DEFAULT 'ABSENT', zone_name character varying(128) NOT NULL DEFAULT 'ABSENT', floor character varying(128) DEFAULT 'ABSENT', " +
                 @"facility character varying(128) NOT NULL DEFAULT 'ABSENT', x_coord float(1) DEFAULT 0, y_coord float(1) DEFAULT 0, " +
                 @"last_updt_time timestamptz DEFAULT current_timestamp, upc_nbr character varying(24) NOT NULL DEFAULT 'ABSENT', " +
-                @"PRIMARY KEY (epc_nbr, last_obsv_time))WITH(OIDS= FALSE); " +
+                @"PRIMARY KEY (epc_nbr))WITH(OIDS= FALSE); " +
                 @"CREATE TABLE IF NOT EXISTS {upc_inv_loc} (upc_nbr character varying(24) NOT NULL, floor character varying(128) NOT NULL DEFAULT 'ABSENT', " +
                 @"zone_name character varying(128) NOT NULL DEFAULT 'ABSENT', facility character varying(128) NOT NULL DEFAULT 'ABSENT', qty bigint, " +
                 @"last_updt_time timestamptz DEFAULT current_timestamp, " +

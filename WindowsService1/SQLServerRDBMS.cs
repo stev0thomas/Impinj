@@ -330,12 +330,14 @@ namespace ItemSenseRDBMService
 
                 //Next get last known threshold events and create temp table
                 GetLatestEpcFromThresholdHist();
-                //Call upsert epc master 
-                UpsertEpcMasterFromTempTable();
 
                 //Now get all last know item events and create temp table
                 GetLatestEpcFromItemEventHist();
-                //Call upsert epc master again as temp table will now have ItemEventHistory data
+
+                //Merge both tables
+                MergeBothTempTables();
+                
+                //Call upsert epc master 
                 UpsertEpcMasterFromTempTable();
 
                 //Now upsert the count for each upc at each location
@@ -591,6 +593,79 @@ namespace ItemSenseRDBMService
             #endregion
         }
 
+        private static void MergeBothTempTables()
+        {
+            #region debug_MergeBothTempTables_kpi
+            DateTime blockTmSt = System.DateTime.Now;
+            log.Debug("MergeBothTempTables started: " + blockTmSt.ToLongTimeString());
+            #endregion
+
+            #region Postgresql DDL
+            //Do Not Alter - These strings are modified via the app.cfg
+            //Update History "updatedb_cmd"
+
+            string updCmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='is_upc_tmp' AND xtype = 'U') DROP TABLE is_upc_tmp; " +
+                    @"CREATE TABLE is_upc_tmp (epc_nbr varchar(128) NOT NULL,  last_obsv_time DateTime, tag_id varchar(128), " +
+                    @"zone_name varchar(128), floor varchar(128), facility varchar(128), x_coord float, " +
+                    @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime, PRIMARY KEY(epc_nbr, last_obsv_time)); ";
+
+
+            const string cmdText = @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{is_temp_upc}' AND xtype = 'U') CREATE TABLE " +
+                    @"{is_temp_upc} (epc_nbr varchar(128) NOT NULL, last_obsv_time DateTime, tag_id varchar(128), " +
+                    @"zone_name varchar(128), floor varchar(128), facility varchar(128), x_coord float, " +
+                    @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime, PRIMARY KEY(epc_nbr, last_obsv_time)); " +
+                    @"MERGE is_upc_tmp AS target USING( " +
+                    @"SELECT epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time " +
+                    @"FROM {is_temp_upc} t1 " +
+                    @")AS source (epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, upc_nbr, last_updt_time) " +
+                    @"ON (target.epc_nbr = source.epc_nbr) " +
+                    @"WHEN MATCHED THEN UPDATE SET last_obsv_time = source.last_obsv_time, tag_id = source.tag_id, zone_name = source.zone_name, " +
+                    @"floor = source.floor, facility = source.facility, x_coord = source.x_coord, y_coord = source.y_coord, " +
+                    @"upc_nbr = source.upc_nbr, last_updt_time = source.last_updt_time " +
+                    @"WHEN NOT MATCHED THEN INSERT (epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, " +
+                    @"upc_nbr, last_updt_time) VALUES (source.epc_nbr, source.last_obsv_time, source.tag_id, source.zone_name, " +
+                    @"source.floor, source.facility, source.x_coord, source.y_coord, source.upc_nbr, source.last_updt_time);";
+
+            string cfgCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_thresh");
+            string postCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_item");
+
+            #endregion
+
+            try
+            {
+                string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
+                SqlConnection conn = new SqlConnection(connStr);
+
+                SqlCommand updatedb_cmd = new SqlCommand(updCmdText, conn);
+                SqlCommand mergedb_cmd = new SqlCommand(cfgCmdText, conn);
+                SqlCommand postdb_cmd = new SqlCommand(postCmdText, conn);
+
+                conn.Open();
+
+                //First drop and create
+                updatedb_cmd.ExecuteNonQuery();
+                // Execute the merge Threshold
+                mergedb_cmd.ExecuteNonQuery();
+                // Finally merge the Item Events
+                postdb_cmd.ExecuteNonQuery();
+
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                string errMsg = "MergeBothTempTables Exception: " + ex.Message + "(" + ex.GetType() + ")";
+                if (null != ex.InnerException)
+                    errMsg += Environment.NewLine + ex.InnerException.Message;
+                log.Error(errMsg);
+            }
+
+            #region debug_MergeBothTempTables_kpi
+            DateTime procTmEnd = DateTime.Now;
+            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+            log.Debug("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString());
+            #endregion
+        }
         private static void UpsertEpcMasterFromTempTable()
         {
             #region debug_UpsertEpcMasterFromTempTable_kpi
@@ -603,7 +678,8 @@ namespace ItemSenseRDBMService
             //Update Epc Master History "upsertdb_cmd"
             const string postText = @"MERGE {epc_master} AS target USING (SELECT epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, " +
                 @"y_coord, last_updt_time, upc_nbr FROM is_upc_tmp) AS source (epc_nbr, last_obsv_time, tag_id, zone_name, floor, facility, x_coord, y_coord, " +
-                @"last_updt_time, upc_nbr) ON (target.epc_nbr = source.epc_nbr) WHEN MATCHED THEN UPDATE set last_obsv_time = source.last_obsv_time, " +
+                @"last_updt_time, upc_nbr) ON (target.epc_nbr = source.epc_nbr AND target.last_obsv_time < source.last_obsv_time) " +
+                @"WHEN MATCHED THEN UPDATE set last_obsv_time = source.last_obsv_time, " +
                 @"tag_id = source.tag_id, zone_name = source.zone_name, floor = source.floor, facility = source.facility, x_coord = source.x_coord, " +
                 @"y_coord = source.y_coord, last_updt_time = source.last_updt_time WHEN NOT MATCHED THEN INSERT (epc_nbr, last_obsv_time, " +
                 @"tag_id, zone_name, floor, facility, x_coord, y_coord, last_updt_time, upc_nbr) VALUES (source.epc_nbr, source.last_obsv_time, source.tag_id, " +
@@ -850,7 +926,7 @@ namespace ItemSenseRDBMService
             const string cmdText = @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{epc_master}' AND xtype = 'U') CREATE TABLE " +
                 @"{epc_master} (epc_nbr varchar(128) NOT NULL UNIQUE, last_obsv_time DateTime, tag_id varchar(128), zone_name varchar(128), " +
                 @"floor varchar(128), facility varchar(128), x_coord float, y_coord float, last_updt_time DateTime,  " +
-                @"upc_nbr varchar(24), PRIMARY KEY (epc_nbr, last_obsv_time)); " +
+                @"upc_nbr varchar(24), PRIMARY KEY (epc_nbr)); " +
                 @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{upc_inv_loc}' AND xtype = 'U') CREATE TABLE " +
                 @"{upc_inv_loc} (upc_nbr varchar(24) NOT NULL, floor varchar(128), zone_name varchar(128), facility varchar(128), qty int, " +
                 @"last_updt_time DateTime, PRIMARY KEY (upc_nbr, floor, zone_name, facility)); " +
