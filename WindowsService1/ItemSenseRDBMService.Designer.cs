@@ -28,13 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.eLog = new System.Diagnostics.EventLog();
-            ((System.ComponentModel.ISupportInitialize)(this.eLog)).BeginInit();
             // 
             // ItemSenseRDBMService
             // 
             this.ServiceName = "ItemSenseRDBMService";
-            ((System.ComponentModel.ISupportInitialize)(this.eLog)).EndInit();
 
         }
 

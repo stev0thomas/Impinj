@@ -28,7 +28,7 @@ namespace ImpinjItemSenseRDBMService
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
 
-        private int eventId = 1;
+        private static int eventId = 1;
         private static AutoResetEvent exit_event = new AutoResetEvent(false);
 
         /// <summary>
@@ -41,8 +41,10 @@ namespace ImpinjItemSenseRDBMService
 
         private static Boolean waitOne = false;
 
+        private static System.Diagnostics.EventLog iLog;
+
         //Instanciate the logging component
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        //private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public enum ServiceState
         {
@@ -71,24 +73,14 @@ namespace ImpinjItemSenseRDBMService
         public ItemSenseRDBMService()
         {
             InitializeComponent();
-            eLog = new System.Diagnostics.EventLog();
-            try
+            iLog = new System.Diagnostics.EventLog();
+            if (!System.Diagnostics.EventLog.SourceExists("Impinj_IS_RDBMS"))
             {
-                if (!System.Diagnostics.EventLog.SourceExists("Impinj_IS_RDBMS"))
-                {
-                    System.Diagnostics.EventLog.CreateEventSource(
-                        "Impinj_IS_RDBMS", "IS_RDBMS_Log");
-                }
-                eLog.Source = "Impinj_IS_RDBMS";
-                eLog.Log = "IS_RDBMS_Log";
+                System.Diagnostics.EventLog.CreateEventSource(
+                    "Impinj_IS_RDBMS", "IS_RDBMS_Log");
             }
-            catch(Exception ex)
-            {
-               string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
-               if (null != ex.InnerException)
-                    errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
-            }
+            iLog.Source = "Impinj_IS_RDBMS";
+            iLog.Log = "IS_RDBMS_Log";
 
             g_itemEventRecords = new ArrayList();
             g_thrRecords = new ArrayList();
@@ -99,7 +91,9 @@ namespace ImpinjItemSenseRDBMService
 
         protected override void OnStart(string[] args)
         {
-            eLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId);
+            System.Diagnostics.Debugger.Launch();
+
+            iLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId);
 
             // Update the service state to Start Pending.  
             ServiceStatus serviceStatus = new ServiceStatus();
@@ -160,17 +154,18 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
         }
 
         private void OnDbTimer(object sender, ElapsedEventArgs e)
         {
-            eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
+           // eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
 
             #region debug_rdbs_event_kpi
             DateTime blockTmSt = System.DateTime.Now;
-            log.Debug("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString());
+            iLog.WriteEntry("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             try
@@ -193,7 +188,9 @@ namespace ImpinjItemSenseRDBMService
                         }
                     default:
                         {
-                            log.Error("App.config has incorrect database name defined.  POSTGRESQL or SQLSERVER are only valid options currently...");
+                            eLog.WriteEntry("App.config has incorrect database name defined.  POSTGRESQL or SQLSERVER are only valid options currently...",
+                                EventLogEntryType.Information, eventId);
+
                             break;
                         }
                 }
@@ -203,14 +200,15 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
- 
+
             #region debug_rdbs_event_kpi
             DateTime procTmEnd = DateTime.Now;
             TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            log.Debug("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString());
+            iLog.WriteEntry("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Error, eventId);
+
             #endregion
         }
 
@@ -290,7 +288,8 @@ namespace ImpinjItemSenseRDBMService
 
                             string infoMsg = "Message Queue details: " + Environment.NewLine + "URI: " + MsgQueueDetails.ServerUrl +
                                 Environment.NewLine + "QueueID: " + MsgQueueDetails.Queue;
-                            log.Info(infoMsg);
+                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId);
+
 
                             // Close the data stream. If we have got here,
                             // everything has gone well and there are no
@@ -299,7 +298,8 @@ namespace ImpinjItemSenseRDBMService
                         }
                         else
                         {
-                            log.Error("null ItemSense data stream.");
+                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId);
+
                         }
                     }
                     else
@@ -341,7 +341,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
         }
 
@@ -443,7 +443,8 @@ namespace ImpinjItemSenseRDBMService
                             MsgQueueDetails.ServerUrl = MsgQueueDetails.ServerUrl.Replace(":5672/%2F", string.Empty);
 
                             string infoMsg = "Message Queue details: " + Environment.NewLine + "URI: " + MsgQueueDetails.ServerUrl + Environment.NewLine + "QueueID: " + MsgQueueDetails.Queue;
-                            log.Info(infoMsg);
+                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId);
+
 
                             // Close the data stream. If we have got here,
                             // everything has gone well and there are no
@@ -452,7 +453,7 @@ namespace ImpinjItemSenseRDBMService
                         }
                         else
                         {
-                            log.Error("null ItemSense data stream.");
+                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId);
                         }
                     }
                     else
@@ -501,7 +502,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
         }
 
@@ -517,7 +518,8 @@ namespace ImpinjItemSenseRDBMService
 
             #region debug_amqp_event_kpi
             DateTime blockTmSt = System.DateTime.Now;
-            log.Debug("AMQP Message Received: " + blockTmSt.ToLongTimeString());
+            iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             if (waitOne)
@@ -530,7 +532,8 @@ namespace ImpinjItemSenseRDBMService
             #region debug_amqp_event_kpi
             DateTime blockTmEnd = System.DateTime.Now;
             TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-            log.Debug("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString());
+            iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             var body = e.Body;
@@ -583,7 +586,12 @@ namespace ImpinjItemSenseRDBMService
                             string deb = rec.ThresholdRecToCsvString();
                             break;
                         }
-                    default: log.Error("Unexpected number of fields received in Threshold AMQP Event Handler.  Expected 8 Received " + msgFields.Count()); break;
+                    default:
+                        {
+                            iLog.WriteEntry("Unexpected number of fields received in Threshold AMQP Event Handler.  Expected 8 Received " + msgFields.Count(),
+                                EventLogEntryType.Error, eventId);
+                            break;
+                        }
                 }
             }
             catch (Exception ex)
@@ -591,13 +599,14 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
             #region debug_amqp_event_kpi
             DateTime procEndTm = DateTime.Now;
             TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-            log.Debug("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString());
+            iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+
             #endregion
         }
 
@@ -610,7 +619,8 @@ namespace ImpinjItemSenseRDBMService
         {
             #region debug_amqp_event_kpi
             DateTime blockTmSt = System.DateTime.Now;
-            log.Debug("AMQP Message Received: " + blockTmSt.ToLongTimeString());
+            iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             if (waitOne)
@@ -623,7 +633,8 @@ namespace ImpinjItemSenseRDBMService
             #region debug_amqp_event_kpi
             DateTime blockTmEnd = System.DateTime.Now;
             TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-            log.Debug("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString());
+            iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             var body = e.Body;
@@ -695,7 +706,13 @@ namespace ImpinjItemSenseRDBMService
                             string deb = rec.ItemEventRecToCsvString();
                             break;
                         }
-                    default: log.Error("Unexpected number of fields received in Item_Event AMQP Event Handler.  Expected 14 Received " + msgFields.Count()); break;
+                    default:
+                        {
+                            iLog.WriteEntry("Unexpected number of fields received in Item_Event AMQP Event Handler.  Expected 14 Received " + msgFields.Count(),
+                                EventLogEntryType.Error, eventId);
+
+                            break;
+                        }
                 }
             }
             catch (Exception ex)
@@ -703,24 +720,26 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
             #region debug_amqp_event_kpi
             DateTime procEndTm = DateTime.Now;
             TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-            log.Debug("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString());
+            iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+
             #endregion
         }
 
         private void OnTimer(object sender, ElapsedEventArgs e)
         {
             // TODO: Insert maintenance activities here.  
-            eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
+           // eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
 
             #region debug_rdbs_event_kpi
             DateTime blockTmSt = System.DateTime.Now;
-            log.Debug("RDBMS timer started: " + blockTmSt.ToLongTimeString());
+            iLog.WriteEntry("RDBMS timer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+
             #endregion
 
             try
@@ -766,34 +785,34 @@ namespace ImpinjItemSenseRDBMService
                             }
                     }
                 }
-                else
-                    log.Info("Nothing to process");
             }
             catch (Exception ex)
             {
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                log.Fatal(errMsg);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+
             }
 
             #region debug_rdbs_event_kpi
             DateTime copyTmEnd = System.DateTime.Now;
             TimeSpan copyTmSpan = copyTmEnd.Subtract(blockTmSt);
-            log.Debug("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString());
+            iLog.WriteEntry("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
 
 
             #region debug_rdbs_event_kpi
             DateTime procTmEnd = DateTime.Now;
             TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            log.Debug("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString());
+            iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Error, eventId);
+
             #endregion
         }
 
         protected override void OnStop()
         {
-            eLog.WriteEntry("ItemSense RDBMS OnStop called", EventLogEntryType.Information, eventId++);
+            iLog.WriteEntry("ItemSense RDBMS OnStop called", EventLogEntryType.Information, eventId++);
 
             ServiceStatus serviceStatus = new ServiceStatus();
             serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
@@ -810,17 +829,17 @@ namespace ImpinjItemSenseRDBMService
 
         protected override void OnContinue()
         {
-            eLog.WriteEntry("ItemSense RDBMS OnContinue called", EventLogEntryType.Information, eventId++);
+            iLog.WriteEntry("ItemSense RDBMS OnContinue called", EventLogEntryType.Information, eventId++);
         }
 
         protected override void OnPause()
         {
-            eLog.WriteEntry("ItemSense RDBMS OnPause called", EventLogEntryType.Information, eventId++);
+            iLog.WriteEntry("ItemSense RDBMS OnPause called", EventLogEntryType.Information, eventId++);
         }
 
         protected override void OnShutdown()
         {
-            eLog.WriteEntry("ItemSense RDBMS OnShutdown called", EventLogEntryType.Information, eventId++);
+            iLog.WriteEntry("ItemSense RDBMS OnShutdown called", EventLogEntryType.Information, eventId++);
         }
     }
 }
