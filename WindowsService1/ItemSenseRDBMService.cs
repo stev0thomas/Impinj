@@ -91,7 +91,8 @@ namespace ImpinjItemSenseRDBMService
 
         protected override void OnStart(string[] args)
         {
-            System.Diagnostics.Debugger.Launch();
+            //For debugging purposes only
+            //System.Diagnostics.Debugger.Launch();
 
             iLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId);
 
