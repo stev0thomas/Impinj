@@ -72,13 +72,23 @@ namespace ImpinjItemSenseRDBMService
         {
             InitializeComponent();
             eLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists("Impinj_IS_RDBMS"))
+            try
             {
-                System.Diagnostics.EventLog.CreateEventSource(
-                    "Impinj_IS_RDBMS", "IS_RDBMS_Log");
+                if (!System.Diagnostics.EventLog.SourceExists("Impinj_IS_RDBMS"))
+                {
+                    System.Diagnostics.EventLog.CreateEventSource(
+                        "Impinj_IS_RDBMS", "IS_RDBMS_Log");
+                }
+                eLog.Source = "Impinj_IS_RDBMS";
+                eLog.Log = "IS_RDBMS_Log";
             }
-            eLog.Source = "Impinj_IS_RDBMS";
-            eLog.Log = "IS_RDBMS_Log";
+            catch(Exception ex)
+            {
+               string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
+               if (null != ex.InnerException)
+                    errMsg += Environment.NewLine + ex.InnerException.Message;
+                log.Fatal(errMsg);
+            }
 
             g_itemEventRecords = new ArrayList();
             g_thrRecords = new ArrayList();
