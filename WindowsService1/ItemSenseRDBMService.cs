@@ -806,7 +806,7 @@ namespace ImpinjItemSenseRDBMService
             #region debug_rdbs_event_kpi
             DateTime procTmEnd = DateTime.Now;
             TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Error, eventId);
+            iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
         }
