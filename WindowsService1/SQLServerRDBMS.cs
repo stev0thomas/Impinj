@@ -3,6 +3,9 @@
 // Visit https://support.impinj.com/hc/en-us/articles/360000468370-Software-Tools-License-Disclaimer
 // for full license details, or contact Impinj, Inc. at support@impinj.com for a copy of the license.
 
+//#define DEBUG
+#undef DEBUG
+
 using System;
 using System.Configuration;
 using System.Collections;
@@ -16,7 +19,7 @@ namespace ItemSenseRDBMService
     {
         protected static DataTable dtEvents = null;
 
-        public SQLServerRDBMS(ArrayList itemEvent, ArrayList thr, ArrayList itemFile) : base(itemEvent, thr, itemFile)
+        public SQLServerRDBMS(ArrayList mastEvent, ArrayList itemEvent, ArrayList thr, ArrayList itemFile) : base(mastEvent, itemEvent, thr, itemFile)
         {
             #region DataTable Setup definitions
 
@@ -77,10 +80,12 @@ namespace ItemSenseRDBMService
 
         protected override void WriteRawItemEventRecordsToRDBMS()
         {
+            #if (DEBUG)            
             #region debug_WriteRawItemEventRecordsToRDBMS_kpi
             DateTime blockTmSt = System.DateTime.Now;
             iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region SqlServer DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -102,7 +107,7 @@ namespace ItemSenseRDBMService
             string postRplTxt = postCmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
             string postCfgCmdText = postRplTxt.Replace("{is_raw_item_event}", ConfigurationManager.AppSettings["ItemSenseRawItemEventTableName"]);
 
-            #endregion
+#endregion
 
             string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
             System.Data.DataTableReader reader = rawItemEventRecs.CreateDataReader();
@@ -143,11 +148,14 @@ namespace ItemSenseRDBMService
                     conn.Close();
                 }
             }
+
+            #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToRDBMS_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
         }
 
@@ -159,10 +167,12 @@ namespace ItemSenseRDBMService
         /// </summary>
         protected override void WriteSmoothedItemEventRecordsToRDBMS()
         {
+            #if (DEBUG)
             #region debug_WriteSmoothedItemEventRecordsToRDBMS_kpi
             DateTime blockTmSt = System.DateTime.Now;
             iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
-            #endregion
+#endregion
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -209,7 +219,7 @@ namespace ItemSenseRDBMService
             string cfgCmdText = cfgRplText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
 
 
-            #endregion
+#endregion
 
             string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -233,19 +243,23 @@ namespace ItemSenseRDBMService
                 }
             }
 
+            #if (DEBUG)
             #region debug_WriteSmoothedItemEventRecordsToRDBMS_kpi
             DateTime procTmEnd = DateTime.Now;
             TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
             iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
-            #endregion
+#endregion
+            #endif
         }
 
         protected override void WriteThresholdRecordsToRDBMS()
         {
+            #if (DEBUG)
             #region debug_WriteThresholdRecordsToRDBMS_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("WriteThresholdRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region SqlServer DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -265,7 +279,7 @@ namespace ItemSenseRDBMService
             string postCfgCmdText = postRplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
 
-            #endregion
+#endregion
 
             string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
             System.Data.DataTableReader reader = thrRecs.CreateDataReader();
@@ -304,21 +318,25 @@ namespace ItemSenseRDBMService
                 }
             }
 
+            #if (DEBUG)
             #region debug_WriteThresholdRecordsToRDBMS_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("WriteThresholdRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
         }
 
 
         public void ProcessItemSenseMessages()
         {
+            #if (DEBUG)
             #region debug_processItemSense_msg_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("ProcessItemSenseMessages started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("ProcessItemSenseMessages started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             try
             {
@@ -358,20 +376,24 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_processItemSense_msg_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("ProcessItemSenseMessages completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("ProcessItemSenseMessages completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private void InsertThresholdSummaryData()
         {
+            #if (DEBUG)
             #region debug_InsertThresholdSummaryData_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("InsertThresholdSummaryData started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("InsertThresholdSummaryData started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
-
+            #endif
+                
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Point of Sale Summary
@@ -407,7 +429,8 @@ namespace ItemSenseRDBMService
             string rpl4Text = repl3Text.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
             string postCmdText = repl4Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
 
-            #endregion
+#endregion
+
             try
             {
                 string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
@@ -432,11 +455,13 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_InsertThresholdSummaryData_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("InsertThresholdSummaryData completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("InsertThresholdSummaryData completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         /// <summary>
@@ -445,10 +470,12 @@ namespace ItemSenseRDBMService
         /// </summary>
         private void TruncateExtensionTables()
         {
+            #if (DEBUG)
             #region debug_TruncateExtensionTables_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("TruncateExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("TruncateExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -465,7 +492,7 @@ namespace ItemSenseRDBMService
             string repl3Text = repl2Text.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
             string cfgCmdText = repl3Text.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
 
-            #endregion
+#endregion
 
             try
             {
@@ -486,19 +513,23 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_TruncateExtensionTables_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("TruncateExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("TruncateExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private static void TruncateItemSenseHist()
         {
+            #if (DEBUG)
             #region debug_TruncateItemEventHist_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("TruncateItemSenseHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("TruncateItemSenseHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -515,7 +546,7 @@ namespace ItemSenseRDBMService
             string repl3Text = repl2Text.Replace("{smoothed_item_event_hist}", ConfigurationManager.AppSettings["SmoothedItemEventHistTableName"]);
             string cfgCmdText = repl3Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
 
-            #endregion
+#endregion
 
             try
             {
@@ -536,32 +567,36 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_TruncateItemEventHist_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("TruncateItemSenseHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("TruncateItemSenseHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private static void UpsertUpcInventoryLocation()
         {
+            #if (DEBUG)
             #region debug_UpsertUpcInventoryLocation_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("UpsertUpcInventoryLocation started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("UpsertUpcInventoryLocation started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
-            //Do Not Alter - These strings are modified via the app.cfg
-            //Update History "upsertdb_cmd"
-            const string postText = @"MERGE {upc_inv_loc} AS target USING (SELECT DISTINCT upc_nbr, floor, zone_name, facility, count(epc_nbr), GETDATE() " +
-                @"FROM {epc_master} GROUP BY upc_nbr, floor, zone_name, facility) AS source (upc_nbr, floor, zone_name, facility, " +
-                @"qty, last_updt_time) ON (target.upc_nbr = source.upc_nbr AND target.floor = source.floor AND target.zone_name = source.zone_name AND target.facility = source.facility) " +
-                @"WHEN MATCHED THEN UPDATE SET qty = source.qty, last_updt_time = source.last_updt_time WHEN NOT MATCHED THEN " +
-                @"INSERT (upc_nbr, floor, zone_name, facility, qty, last_updt_time) VALUES (source.upc_nbr, source.floor, source.zone_name, source.facility, " +
-                @"source.qty, source.last_updt_time); ";
+                        //Do Not Alter - These strings are modified via the app.cfg
+                        //Update History "upsertdb_cmd"
+                        const string postText = @"MERGE {upc_inv_loc} AS target USING (SELECT DISTINCT upc_nbr, floor, zone_name, facility, count(epc_nbr), GETDATE() " +
+                            @"FROM {epc_master} GROUP BY upc_nbr, floor, zone_name, facility) AS source (upc_nbr, floor, zone_name, facility, " +
+                            @"qty, last_updt_time) ON (target.upc_nbr = source.upc_nbr AND target.floor = source.floor AND target.zone_name = source.zone_name AND target.facility = source.facility) " +
+                            @"WHEN MATCHED THEN UPDATE SET qty = source.qty, last_updt_time = source.last_updt_time WHEN NOT MATCHED THEN " +
+                            @"INSERT (upc_nbr, floor, zone_name, facility, qty, last_updt_time) VALUES (source.upc_nbr, source.floor, source.zone_name, source.facility, " +
+                            @"source.qty, source.last_updt_time); ";
 
-            string repText = postText.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
-            string cfgCmdText = repText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
+                        string repText = postText.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
+                        string cfgCmdText = repText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
             #endregion
 
             try
@@ -583,19 +618,23 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_processItemSense_msg_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("UpsertUpcInventoryLocation completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("UpsertUpcInventoryLocation completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private static void MergeBothTempTables()
         {
+            #if (DEBUG)
             #region debug_MergeBothTempTables_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("MergeBothTempTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("MergeBothTempTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -626,7 +665,7 @@ namespace ItemSenseRDBMService
             string cfgCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_thresh");
             string postCmdText = cmdText.Replace("{is_temp_upc}", "is_upc_tmp_item");
 
-            #endregion
+#endregion
 
             try
             {
@@ -656,18 +695,23 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_MergeBothTempTables_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
+
         }
         private static void UpsertEpcMasterFromTempTable()
         {
+            #if (DEBUG)
             #region debug_UpsertEpcMasterFromTempTable_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("UpsertEpcMasterFromTempTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("UpsertEpcMasterFromTempTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -682,7 +726,7 @@ namespace ItemSenseRDBMService
                 @"source.zone_name, source.floor, source.facility, source.x_coord, source.y_coord, source.last_updt_time, source.upc_nbr);";
 
             string cfgCmdText = postText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
-            #endregion
+#endregion
 
             try
             {
@@ -703,20 +747,23 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_processItemSense_msg_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("UpsertEpcMasterFromTempTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("UpsertEpcMasterFromTempTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private static void GetLatestEpcFromItemEventHist()
         {
+            #if (DEBUG)
             #region debug_GetLatestEpcFromItemEventHist_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("GetLatestEpcFromItemEventHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("GetLatestEpcFromItemEventHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
-
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -733,7 +780,7 @@ namespace ItemSenseRDBMService
                 @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime,  PRIMARY KEY(epc_nbr)); ";
 
 
-            #endregion
+#endregion
 
             try
             {
@@ -756,7 +803,7 @@ namespace ItemSenseRDBMService
                             EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
                                 dr[3].ToString(), dr[4].ToString(), dr[5].ToString(), Convert.ToDouble(dr[6]), Convert.ToDouble(dr[7]),
                                 gtin.ToUpc(), DateTime.Now);
-                            itemEventRecords.Add(rec);
+                            mastEventRecords.Add(rec);
                         }
                     }
                     else
@@ -765,14 +812,14 @@ namespace ItemSenseRDBMService
                         EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
                             dr[3].ToString(), dr[4].ToString(), dr[5].ToString(), Convert.ToDouble(dr[6]), Convert.ToDouble(dr[7]),
                             GetCustomUpc(dr[0].ToString()), Convert.ToDateTime(dr[1].ToString()));
-                        itemEventRecords.Add(rec);
+                        mastEventRecords.Add(rec);
                     }
                 }
                 dr.Close();
 
                 //Copy the upc records into a data table so we may create a data reader for use with bulk copy
                 dtEvents.Clear();
-                foreach (EpcMasterRec rec in itemEventRecords)
+                foreach (EpcMasterRec rec in mastEventRecords)
                     dtEvents.Rows.Add(rec.Epc, rec.ObservationTime, rec.TagId, rec.ZoneName, rec.Floor, rec.Facility, rec.Xcoord, rec.Ycoord, rec.Upc, rec.LastUpdateTime);
 
                 //Drop and create temp table
@@ -798,22 +845,24 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
-
+            #if (DEBUG)
             #region debug_GetLatestEpcFromItemEventHist_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("DoItemEventRecordsETLM completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("DoItemEventRecordsETLM completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
         }
 
         private void GetLatestEpcFromThresholdHist()
         {
+            #if (DEBUG)
             #region debug_GetLatestEpcFromThresholdHist_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("GetLatestEpcFromThresholdHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("GetLatestEpcFromThresholdHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
-
+            #endif
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
@@ -828,7 +877,7 @@ namespace ItemSenseRDBMService
                 @"zone_name varchar(128), floor varchar(128), facility varchar(128), x_coord float, " +
                 @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime, PRIMARY KEY(epc_nbr)); ";
 
-            #endregion
+#endregion
 
             try
             {
@@ -850,7 +899,7 @@ namespace ItemSenseRDBMService
                             Sgtin96 gtin = Sgtin96.FromString(dr[0].ToString());
                             EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
                                 string.Empty, string.Empty, string.Empty, 0, 0, gtin.ToUpc(), DateTime.Now);
-                            thrRecords.Add(rec);
+                            mastEventRecords.Add(rec);
                         }
                     }
                     else
@@ -859,14 +908,14 @@ namespace ItemSenseRDBMService
                         EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), dr[2].ToString(),
                             dr[3].ToString(), dr[4].ToString(), dr[5].ToString(), Convert.ToDouble(dr[6]), Convert.ToDouble(dr[7]),
                             GetCustomUpc(dr[0].ToString()), Convert.ToDateTime(dr[1].ToString()));
-                        itemEventRecords.Add(rec);
+                        mastEventRecords.Add(rec);
                     }
                 }
                 dr.Close();
 
                 //Copy the upc records into a data table so we may create a data reader for use with bulk copy
                 dtEvents.Clear();
-                foreach (EpcMasterRec rec in thrRecords)
+                foreach (EpcMasterRec rec in mastEventRecords)
                     dtEvents.Rows.Add(rec.Epc, rec.ObservationTime, rec.TagId, rec.ZoneName, rec.Floor, rec.Facility, rec.Xcoord, rec.Ycoord, rec.Upc, rec.LastUpdateTime);
 
                 //Drop and create temp table
@@ -891,50 +940,53 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
-
+            #if (DEBUG)
             #region debug_GetLatestEpcFromThresholdHist_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("GetLatestEpcFromThresholdHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("GetLatestEpcFromThresholdHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
 
         private void CreateItemSenseRdbmsExtensionTables()
         {
+            #if (DEBUG)
             #region debug_CreateItemSenseRdbmsExtensionTables_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
 
             #region Postgresql DDL
-            //Create "createdb_cmd"
-            const string cmdText = @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{epc_master}' AND xtype = 'U') CREATE TABLE " +
-                @"{epc_master} (epc_nbr varchar(128) NOT NULL UNIQUE, last_obsv_time DateTime, tag_id varchar(128), zone_name varchar(128), " +
-                @"floor varchar(128), facility varchar(128), x_coord float, y_coord float, last_updt_time DateTime,  " +
-                @"upc_nbr varchar(24), PRIMARY KEY (epc_nbr)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{upc_inv_loc}' AND xtype = 'U') CREATE TABLE " +
-                @"{upc_inv_loc} (upc_nbr varchar(24) NOT NULL, floor varchar(128), zone_name varchar(128), facility varchar(128), qty int, " +
-                @"last_updt_time DateTime, PRIMARY KEY (upc_nbr, floor, zone_name, facility)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{upc_inv_loc}_upc_floor_zone_fac') " +
-                @"CREATE UNIQUE INDEX  UK_{upc_inv_loc}_upc_floor_zone_fac ON {upc_inv_loc} (upc_nbr, floor, zone_name, facility); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='dept' AND xtype = 'U') CREATE TABLE " +
-                @"dept (dept_nbr int, dept_desc varchar(128), zone_name varchar(128), floor varchar(128), facility varchar(128), PRIMARY KEY (dept_nbr)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='item' AND xtype = 'U') CREATE TABLE " +
-                @"item (upc_nbr varchar(24), dept_nbr int, retail_price float, item_cost float, item_nbr int, avg_rate_of_sale float, " +
-                @"item_desc varchar(128), mfg_name varchar(128), shelf_qty int, on_hand int, PRIMARY KEY (upc_nbr)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{pos}' AND xtype = 'U') CREATE TABLE " +
-                @"{pos} (upc_nbr varchar(24) NOT NULL, qty_sold int, qty_returned int, last_updt_time DateTime, PRIMARY KEY (upc_nbr, last_updt_time)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{pos}_upc_lastupdt' ) " +
-                @"CREATE UNIQUE INDEX UK_{pos}_upc_lastupdt ON {pos} (upc_nbr, qty_sold, qty_returned); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{ship_rcv}' AND xtype = 'U') CREATE TABLE " +
-                @"{ship_rcv} (upc_nbr varchar(24) NOT NULL, qty_shipped int, qty_received int, last_updt_time DateTime, PRIMARY KEY (upc_nbr, last_updt_time)); " +
-                @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{ship_rcv}_upc_ship_rcvd') " +
-                @"CREATE UNIQUE INDEX UK_{ship_rcv}_upc_ship_rcvd ON {ship_rcv} (upc_nbr, qty_shipped, qty_received); ";
+                        //Create "createdb_cmd"
+                        const string cmdText = @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{epc_master}' AND xtype = 'U') CREATE TABLE " +
+                            @"{epc_master} (epc_nbr varchar(128) NOT NULL UNIQUE, last_obsv_time DateTime, tag_id varchar(128), zone_name varchar(128), " +
+                            @"floor varchar(128), facility varchar(128), x_coord float, y_coord float, last_updt_time DateTime,  " +
+                            @"upc_nbr varchar(24), PRIMARY KEY (epc_nbr)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{upc_inv_loc}' AND xtype = 'U') CREATE TABLE " +
+                            @"{upc_inv_loc} (upc_nbr varchar(24) NOT NULL, floor varchar(128), zone_name varchar(128), facility varchar(128), qty int, " +
+                            @"last_updt_time DateTime, PRIMARY KEY (upc_nbr, floor, zone_name, facility)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{upc_inv_loc}_upc_floor_zone_fac') " +
+                            @"CREATE UNIQUE INDEX  UK_{upc_inv_loc}_upc_floor_zone_fac ON {upc_inv_loc} (upc_nbr, floor, zone_name, facility); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='dept' AND xtype = 'U') CREATE TABLE " +
+                            @"dept (dept_nbr int, dept_desc varchar(128), zone_name varchar(128), floor varchar(128), facility varchar(128), PRIMARY KEY (dept_nbr)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='item' AND xtype = 'U') CREATE TABLE " +
+                            @"item (upc_nbr varchar(24), dept_nbr int, retail_price float, item_cost float, item_nbr int, avg_rate_of_sale float, " +
+                            @"item_desc varchar(128), mfg_name varchar(128), shelf_qty int, on_hand int, PRIMARY KEY (upc_nbr)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{pos}' AND xtype = 'U') CREATE TABLE " +
+                            @"{pos} (upc_nbr varchar(24) NOT NULL, qty_sold int, qty_returned int, last_updt_time DateTime, PRIMARY KEY (upc_nbr, last_updt_time)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{pos}_upc_lastupdt' ) " +
+                            @"CREATE UNIQUE INDEX UK_{pos}_upc_lastupdt ON {pos} (upc_nbr, qty_sold, qty_returned); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{ship_rcv}' AND xtype = 'U') CREATE TABLE " +
+                            @"{ship_rcv} (upc_nbr varchar(24) NOT NULL, qty_shipped int, qty_received int, last_updt_time DateTime, PRIMARY KEY (upc_nbr, last_updt_time)); " +
+                            @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{ship_rcv}_upc_ship_rcvd') " +
+                            @"CREATE UNIQUE INDEX UK_{ship_rcv}_upc_ship_rcvd ON {ship_rcv} (upc_nbr, qty_shipped, qty_received); ";
 
-            string rplTxt = cmdText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
-            string rpl2Text = rplTxt.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
-            string rpl3Text = rpl2Text.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
-            string cfgCmdText = rpl3Text.Replace("{ship_rcv}", ConfigurationManager.AppSettings["ItemSenseExtensionShipRecvTableName"]);
+                        string rplTxt = cmdText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
+                        string rpl2Text = rplTxt.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
+                        string rpl3Text = rpl2Text.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
+                        string cfgCmdText = rpl3Text.Replace("{ship_rcv}", ConfigurationManager.AppSettings["ItemSenseExtensionShipRecvTableName"]);
 
             #endregion
 
@@ -956,11 +1008,13 @@ namespace ItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_CreateItemSenseRdbmsExtensionTables_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
+            #endif
         }
     }
 }

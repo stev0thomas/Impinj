@@ -3,6 +3,8 @@
 // Visit https://support.impinj.com/hc/en-us/articles/360000468370-Software-Tools-License-Disclaimer
 // for full license details, or contact Impinj, Inc. at support@impinj.com for a copy of the license.
 
+//#define DEBUG
+#undef DEBUG
 
 using System;
 using System.Diagnostics;
@@ -42,9 +44,6 @@ namespace ImpinjItemSenseRDBMService
         private static Boolean waitOne = false;
 
         private static System.Diagnostics.EventLog iLog;
-
-        //Instanciate the logging component
-        //private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public enum ServiceState
         {
@@ -92,7 +91,9 @@ namespace ImpinjItemSenseRDBMService
         protected override void OnStart(string[] args)
         {
             //For debugging purposes only
-            //System.Diagnostics.Debugger.Launch();
+            #if (DEBUG)
+                System.Diagnostics.Debugger.Launch();
+            #endif
 
             iLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId);
 
@@ -161,13 +162,13 @@ namespace ImpinjItemSenseRDBMService
 
         private void OnDbTimer(object sender, ElapsedEventArgs e)
         {
-           // eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
-
+            #if (DEBUG)
             #region debug_rdbs_event_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             try
             {
@@ -177,20 +178,20 @@ namespace ImpinjItemSenseRDBMService
                 {
                     case "POSTGRESQL":
                         {
-                            PostgreSqlRDBMS pgres = new PostgreSqlRDBMS(new ArrayList(), new ArrayList(), g_itemFileRecords);
+                            PostgreSqlRDBMS pgres = new PostgreSqlRDBMS(new ArrayList(), new ArrayList(), new ArrayList(), g_itemFileRecords);
                             pgres.ProcessItemSenseMessages();
                             break;
                         }
                     case "SQLSERVER":
                         {
-                            SQLServerRDBMS sqlsrv = new SQLServerRDBMS(new ArrayList(), new ArrayList(), g_itemFileRecords);
+                            SQLServerRDBMS sqlsrv = new SQLServerRDBMS(new ArrayList(), new ArrayList(), new ArrayList(), g_itemFileRecords);
                             sqlsrv.ProcessItemSenseMessages();
                             break;
                         }
                     default:
                         {
-                            eLog.WriteEntry("App.config has incorrect database name defined.  POSTGRESQL or SQLSERVER are only valid options currently...",
-                                EventLogEntryType.Information, eventId);
+                            iLog.WriteEntry("App.config has incorrect database name defined.  POSTGRESQL or SQLSERVER are only valid options currently...",
+                                EventLogEntryType.Error, eventId);
 
                             break;
                         }
@@ -204,13 +205,15 @@ namespace ImpinjItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
-
+            #if (DEBUG)
             #region debug_rdbs_event_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif 
+
         }
 
         private static void InitiateThresholdAMQP()
@@ -516,12 +519,13 @@ namespace ImpinjItemSenseRDBMService
         /// <param name="e"></param>
         private static void Threshold_Received(object sender, BasicDeliverEventArgs e)
         {
-
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             if (waitOne)
             {
@@ -530,12 +534,14 @@ namespace ImpinjItemSenseRDBMService
                 while (waitOne);
             }
 
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime blockTmEnd = System.DateTime.Now;
-            TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmEnd = System.DateTime.Now;
+                        TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             var body = e.Body;
             var message = Encoding.UTF8.GetString(body);
@@ -603,12 +609,14 @@ namespace ImpinjItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime procEndTm = DateTime.Now;
-            TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-            iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procEndTm = DateTime.Now;
+                        TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
+                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
         }
 
         /// <summary>
@@ -618,11 +626,13 @@ namespace ImpinjItemSenseRDBMService
         /// <param name="e"></param>
         private static void ItemEvent_Received(object sender, BasicDeliverEventArgs e)
         {
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             if (waitOne)
             {
@@ -631,12 +641,14 @@ namespace ImpinjItemSenseRDBMService
                 while (waitOne);
             }
 
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime blockTmEnd = System.DateTime.Now;
-            TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmEnd = System.DateTime.Now;
+                        TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             var body = e.Body;
             var message = Encoding.UTF8.GetString(body);
@@ -704,7 +716,6 @@ namespace ImpinjItemSenseRDBMService
                                 }
                             }
                             g_itemEventRecords.Add(rec);
-                            string deb = rec.ItemEventRecToCsvString();
                             break;
                         }
                     default:
@@ -724,24 +735,25 @@ namespace ImpinjItemSenseRDBMService
                 iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
             }
 
+            #if (DEBUG)
             #region debug_amqp_event_kpi
-            DateTime procEndTm = DateTime.Now;
-            TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-            iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procEndTm = DateTime.Now;
+                        TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
+                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
         }
 
         private void OnTimer(object sender, ElapsedEventArgs e)
         {
-            // TODO: Insert maintenance activities here.  
-           // eLog.WriteEntry("Maintaining the database table sizes", EventLogEntryType.Information, eventId++);
-
+            #if (DEBUG)
             #region debug_rdbs_event_kpi
-            DateTime blockTmSt = System.DateTime.Now;
-            iLog.WriteEntry("RDBMS timer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        DateTime blockTmSt = System.DateTime.Now;
+                        iLog.WriteEntry("RDBMS timer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
 
             try
             {
@@ -756,7 +768,7 @@ namespace ImpinjItemSenseRDBMService
                     {
                         case "POSTGRESQL":
                             {
-                                PostgreSqlRDBMS pgres = new PostgreSqlRDBMS(g_itemEventRecords, g_thrRecords, g_itemFileRecords);
+                                PostgreSqlRDBMS pgres = new PostgreSqlRDBMS(new ArrayList(), g_itemEventRecords, g_thrRecords, g_itemFileRecords);
                                 g_itemEventRecords.Clear();
                                 g_thrRecords.Clear();
                                 //Unblock the ItemEvent and Threshold Callbacks
@@ -766,7 +778,7 @@ namespace ImpinjItemSenseRDBMService
                             }
                         case "SQLSERVER":
                             {
-                                SQLServerRDBMS sqlsrv = new SQLServerRDBMS(g_itemEventRecords, g_thrRecords, g_itemFileRecords);
+                                SQLServerRDBMS sqlsrv = new SQLServerRDBMS(new ArrayList(), g_itemEventRecords, g_thrRecords, g_itemFileRecords);
                                 g_itemEventRecords.Clear();
                                 g_thrRecords.Clear();
                                 //Unblock the ItemEvent and Threshold Callbacks
@@ -776,7 +788,7 @@ namespace ImpinjItemSenseRDBMService
                             }
                         default:
                             {
-                                RDBMSbase rdbms = new RDBMSbase(g_itemEventRecords, g_thrRecords, g_itemFileRecords);
+                                RDBMSbase rdbms = new RDBMSbase(new ArrayList(), g_itemEventRecords, g_thrRecords, g_itemFileRecords);
                                 g_itemEventRecords.Clear();
                                 g_thrRecords.Clear();
                                 //Unblock the ItemEvent and Threshold Callbacks
@@ -796,19 +808,20 @@ namespace ImpinjItemSenseRDBMService
 
             }
 
+            #if (DEBUG)
             #region debug_rdbs_event_kpi
-            DateTime copyTmEnd = System.DateTime.Now;
-            TimeSpan copyTmSpan = copyTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime copyTmEnd = System.DateTime.Now;
+                        TimeSpan copyTmSpan = copyTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
             #endregion
-
-
+            
             #region debug_rdbs_event_kpi
-            DateTime procTmEnd = DateTime.Now;
-            TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-            iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        DateTime procTmEnd = DateTime.Now;
+                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
+                        iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
 
             #endregion
+            #endif
         }
 
         protected override void OnStop()
