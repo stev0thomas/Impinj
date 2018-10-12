@@ -69,7 +69,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_processAMQP_msg_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("ProcessAMQP started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("ProcessAMQP started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -103,7 +103,7 @@ namespace ItemSenseRDBMService
                         }
                     }
                     else
-                        iLog.WriteEntry("Failed to write raw location recs to in-memory tables.", EventLogEntryType.Error, eventId);
+                        iLog.WriteEntry("Failed to write raw location recs to in-memory tables.", EventLogEntryType.Error, eventId); eventId++;
 
                 }
 
@@ -134,7 +134,7 @@ namespace ItemSenseRDBMService
                         }
                     }
                     else
-                        iLog.WriteEntry("Failed to write threshold recs to in-memory tables.", EventLogEntryType.Error, eventId);
+                        iLog.WriteEntry("Failed to write threshold recs to in-memory tables.", EventLogEntryType.Error, eventId); eventId++;
                 }
             }
             catch (Exception ex)
@@ -142,14 +142,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "ProcessAMQPmessages Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_processAMQP_msg_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("AMQP Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("AMQP Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -176,7 +176,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToXML_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteThresholdRecordsToXML started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToXML started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -210,14 +210,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteThresholdRecordsToXML Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToXML_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteThresholdRecordsToXML completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToXML completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -228,7 +228,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToCSV_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteThresholdRecordsToCSV started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToCSV started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -243,14 +243,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteThresholdRecordsToCSV Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToCSV_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteThresholdRecordsToCSV completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToCSV completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -285,7 +285,7 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteToCSV Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
         }
 
@@ -294,7 +294,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToXML_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteRawItemEventRecordsToXML started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToXML started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -334,14 +334,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteRawItemEventRecordsToXML Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToXML_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteRawItemEventRecordsToXML completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToXML completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -351,7 +351,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToCSV_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteRawItemEventRecordsToCSV started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToCSV started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -366,14 +366,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteRawItemEventRecordsToCSV Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToCSV_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteRawItemEventRecordsToCSV completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToCSV completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -388,7 +388,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToTable_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteThresholdRecordsToTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -450,7 +450,7 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteThresholdRecordsToTable Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
                 retVal = false;
             }
 
@@ -458,7 +458,7 @@ namespace ItemSenseRDBMService
             #region debug_WriteThresholdRecordsToTable_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteThresholdRecordsToTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Error, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Error, eventId); eventId++;
             #endregion
             #endif
 
@@ -476,7 +476,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToTable_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteRawItemEventRecordsToTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -567,7 +567,7 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteRawItemEventRecordsToTable Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
                 retVal = false;
             }
 
@@ -575,7 +575,7 @@ namespace ItemSenseRDBMService
             #region debug_WriteRawItemEventRecordsToTable_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteRawItemEventRecordsToTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -584,7 +584,7 @@ namespace ItemSenseRDBMService
 
         public static string GetCustomUpc(string tagId)
         {
-            string retVal = string.Empty;
+            string retVal = tagId;
 
             try
             {
@@ -610,7 +610,7 @@ namespace ItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
                 return retVal;
             }
 

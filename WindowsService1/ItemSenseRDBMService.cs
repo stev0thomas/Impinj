@@ -95,7 +95,7 @@ namespace ImpinjItemSenseRDBMService
                 System.Diagnostics.Debugger.Launch();
             #endif
 
-            iLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId);
+            iLog.WriteEntry("ItemSense RDBMS OnStart called", EventLogEntryType.Information, eventId); eventId++;
 
             // Update the service state to Start Pending.  
             ServiceStatus serviceStatus = new ServiceStatus();
@@ -104,10 +104,7 @@ namespace ImpinjItemSenseRDBMService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
             //Populate Item File from csv file if necessary
-            if (Convert.ToBoolean(ConfigurationManager.AppSettings["Sgtin96Encoded"]) is false)
-            {
-                PopulateItemFile();
-            }
+            PopulateItemFile();
 
             //Start threads to set up the AMQP Message port with the filters and settings from app.config
             //Instantiate the array lists that will hold the item, threshold
@@ -156,7 +153,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
         }
 
@@ -165,7 +162,7 @@ namespace ImpinjItemSenseRDBMService
             #if (DEBUG)
             #region debug_rdbs_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("RDBMS DbTimer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -191,7 +188,7 @@ namespace ImpinjItemSenseRDBMService
                     default:
                         {
                             iLog.WriteEntry("App.config has incorrect database name defined.  POSTGRESQL or SQLSERVER are only valid options currently...",
-                                EventLogEntryType.Error, eventId);
+                                EventLogEntryType.Error, eventId); eventId++;
 
                             break;
                         }
@@ -202,14 +199,14 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_rdbs_event_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("RDBMS DbTimer Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif 
@@ -292,7 +289,7 @@ namespace ImpinjItemSenseRDBMService
 
                             string infoMsg = "Message Queue details: " + Environment.NewLine + "URI: " + MsgQueueDetails.ServerUrl +
                                 Environment.NewLine + "QueueID: " + MsgQueueDetails.Queue;
-                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId);
+                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId); eventId++;
 
 
                             // Close the data stream. If we have got here,
@@ -302,7 +299,7 @@ namespace ImpinjItemSenseRDBMService
                         }
                         else
                         {
-                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId);
+                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId); eventId++;
 
                         }
                     }
@@ -345,7 +342,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
         }
 
@@ -447,7 +444,7 @@ namespace ImpinjItemSenseRDBMService
                             MsgQueueDetails.ServerUrl = MsgQueueDetails.ServerUrl.Replace(":5672/%2F", string.Empty);
 
                             string infoMsg = "Message Queue details: " + Environment.NewLine + "URI: " + MsgQueueDetails.ServerUrl + Environment.NewLine + "QueueID: " + MsgQueueDetails.Queue;
-                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId);
+                            iLog.WriteEntry(infoMsg, EventLogEntryType.Information, eventId); eventId++;
 
 
                             // Close the data stream. If we have got here,
@@ -457,7 +454,7 @@ namespace ImpinjItemSenseRDBMService
                         }
                         else
                         {
-                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId);
+                            iLog.WriteEntry("null ItemSense data stream.", EventLogEntryType.Error, eventId); eventId++;
                         }
                     }
                     else
@@ -506,7 +503,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
         }
 
@@ -522,7 +519,7 @@ namespace ImpinjItemSenseRDBMService
             #if (DEBUG)
             #region debug_amqp_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -538,7 +535,7 @@ namespace ImpinjItemSenseRDBMService
             #region debug_amqp_event_kpi
                         DateTime blockTmEnd = System.DateTime.Now;
                         TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -591,12 +588,15 @@ namespace ImpinjItemSenseRDBMService
                             }
                             g_thrRecords.Add(rec);
                             string deb = rec.ThresholdRecToCsvString();
+                            if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                                iLog.WriteEntry("Threshold Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
+
                             break;
                         }
                     default:
                         {
                             iLog.WriteEntry("Unexpected number of fields received in Threshold AMQP Event Handler.  Expected 8 Received " + msgFields.Count(),
-                                EventLogEntryType.Error, eventId);
+                                EventLogEntryType.Error, eventId); eventId++;
                             break;
                         }
                 }
@@ -606,14 +606,14 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_amqp_event_kpi
                         DateTime procEndTm = DateTime.Now;
                         TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -629,7 +629,7 @@ namespace ImpinjItemSenseRDBMService
             #if (DEBUG)
             #region debug_amqp_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -645,7 +645,7 @@ namespace ImpinjItemSenseRDBMService
             #region debug_amqp_event_kpi
                         DateTime blockTmEnd = System.DateTime.Now;
                         TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -716,12 +716,16 @@ namespace ImpinjItemSenseRDBMService
                                 }
                             }
                             g_itemEventRecords.Add(rec);
+                            string deb = rec.ItemEventRecToCsvString();
+                            if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                                iLog.WriteEntry("Threshold Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
+
                             break;
                         }
                     default:
                         {
                             iLog.WriteEntry("Unexpected number of fields received in Item_Event AMQP Event Handler.  Expected 14 Received " + msgFields.Count(),
-                                EventLogEntryType.Error, eventId);
+                                EventLogEntryType.Error, eventId); eventId++;
 
                             break;
                         }
@@ -732,14 +736,14 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_amqp_event_kpi
                         DateTime procEndTm = DateTime.Now;
                         TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
-                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -750,7 +754,7 @@ namespace ImpinjItemSenseRDBMService
             #if (DEBUG)
             #region debug_rdbs_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("RDBMS timer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("RDBMS timer started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif
@@ -804,7 +808,7 @@ namespace ImpinjItemSenseRDBMService
                 string errMsg = "Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
 
             }
 
@@ -812,13 +816,13 @@ namespace ImpinjItemSenseRDBMService
             #region debug_rdbs_event_kpi
                         DateTime copyTmEnd = System.DateTime.Now;
                         TimeSpan copyTmSpan = copyTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("Deep array copy completed(ms): " + copyTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             
             #region debug_rdbs_event_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("RDBMS Processing completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
 
             #endregion
             #endif

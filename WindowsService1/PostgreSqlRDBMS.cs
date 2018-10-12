@@ -30,7 +30,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToRDBMS_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -84,6 +84,9 @@ namespace ItemSenseRDBMService
                 updatedb_cmd.ExecuteNonQuery();
                 conn.Close();
 
+                if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                    iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS rows inserted: " + itemEventRecords.Count.ToString(), EventLogEntryType.Information, eventId); eventId++;
+
                 if (Convert.ToBoolean(ConfigurationManager.AppSettings["SmoothDataXY"]))
                     WriteSmoothedItemEventRecordsToRDBMS();
             }
@@ -92,14 +95,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteRawItemEventRecordsToRDBMS Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteRawItemEventRecordsToRDBMS_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteRawItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -114,7 +117,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteSmoothedItemEventRecordsToRDBMS_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -178,14 +181,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "WriteSmoothedItemEventRecordsToRDBMS Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteSmoothedItemEventRecordsToRDBMS_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteSmoothedItemEventRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -199,7 +202,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToRDBMS_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -249,20 +252,24 @@ namespace ItemSenseRDBMService
                 NpgsqlCommand updatedb_cmd = new NpgsqlCommand(postCfgCmdText, conn);
                 updatedb_cmd.ExecuteNonQuery();
                 conn.Close();
+
+                if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                    iLog.WriteEntry("WriteThresholdRecordsToRDBMS rows inserted: " + thrRecords.Count.ToString(), EventLogEntryType.Information, eventId); eventId++;
+
             }
             catch (Exception ex)
             {
                 string errMsg = "WriteThresholdRecordsToRDBMS Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_WriteThresholdRecordsToRDBMS_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("WriteThresholdRecordsToRDBMS completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -272,7 +279,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_processItemSense_msg_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("ProcessItemSenseMessages started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("ProcessItemSenseMessages started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -308,14 +315,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "ProcessItemSenseMessages Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_processItemSense_msg_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("ProcessItemSenseMessages completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("ProcessItemSenseMessages completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -331,7 +338,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_TruncateExtensionTables_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("TruncateExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("TruncateExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -360,14 +367,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "TruncateExtensionTables Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_TruncateExtensionTables_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("TruncateExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("TruncateExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -377,7 +384,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_TruncateItemEventHist_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("TruncateItemSenseHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("TruncateItemSenseHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -409,14 +416,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "TruncateItemSenseHist Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_TruncateItemEventHist_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("TruncateItemSenseHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("TruncateItemSenseHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -426,7 +433,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_UpsertUpcInventoryLocation_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("UpsertUpcInventoryLocation started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("UpsertUpcInventoryLocation started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -457,14 +464,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "UpsertUpcInventoryLocation Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_processItemSense_msg_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("UpsertUpcInventoryLocation completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("UpsertUpcInventoryLocation completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -474,7 +481,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_MergeBothTempTables_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("MergeBothTempTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("MergeBothTempTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -527,14 +534,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "MergeBothTempTables Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_MergeBothTempTables_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("MergeBothTempTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
                         #endregion
             #endif
         }
@@ -544,7 +551,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_UpsertEpcMasterFromTempTable_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("UpsertEpcMasterFromTempTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("UpsertEpcMasterFromTempTable started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -577,14 +584,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "UpsertEpcMasterFromTempTable Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_processItemSense_msg_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("UpsertEpcMasterFromTempTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("UpsertEpcMasterFromTempTable completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -594,7 +601,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_GetLatestEpcFromItemEventHist_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("GetLatestEpcFromItemEventHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("GetLatestEpcFromItemEventHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -673,14 +680,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "GetLatestEpcFromItemEventHist Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_GetLatestEpcFromItemEventHist_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("DoItemEventRecordsETLM completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("DoItemEventRecordsETLM completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
@@ -690,7 +697,7 @@ namespace ItemSenseRDBMService
             #if (DEBUG)
             #region debug_GetLatestEpcFromThresholdHist_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("GetLatestEpcFromThresholdHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("GetLatestEpcFromThresholdHist started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
 
@@ -725,15 +732,12 @@ namespace ItemSenseRDBMService
                 // Pull UPC from SGTIN reads only and Output rows to array list for insertion into UPC temp table
                 while (dr.Read())
                 {
-                    if (Convert.ToBoolean(ConfigurationManager.AppSettings["Sgtin96Encoded"]))
+                    if (Sgtin96.IsValidSGTIN(dr[0].ToString()))
                     {
-                        if (Sgtin96.IsValidSGTIN(dr[0].ToString()))
-                        {
-                            Sgtin96 gtin = Sgtin96.FromString(dr[0].ToString());
-                            EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), "ABSENT",
-                                dr[2].ToString(), dr[3].ToString(), dr[4].ToString(), 0, 0, gtin.ToUpc(), Convert.ToDateTime(dr[1].ToString()));
-                            mastEventRecords.Add(rec);
-                        }
+                        Sgtin96 gtin = Sgtin96.FromString(dr[0].ToString());
+                        EpcMasterRec rec = new EpcMasterRec(dr[0].ToString(), Convert.ToDateTime(dr[1].ToString()), "ABSENT",
+                            dr[2].ToString(), dr[3].ToString(), dr[4].ToString(), 0, 0, gtin.ToUpc(), Convert.ToDateTime(dr[1].ToString()));
+                        mastEventRecords.Add(rec);
                     }
                     else
                     {
@@ -767,26 +771,26 @@ namespace ItemSenseRDBMService
                 string errMsg = "GetLatestEpcFromThresholdHist Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_GetLatestEpcFromThresholdHist_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("GetLatestEpcFromThresholdHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("GetLatestEpcFromThresholdHist completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
 
         private void CreateItemSenseRdbmsExtensionTables()
         {
-#if (DEBUG)
+            #if (DEBUG)
             #region debug_CreateItemSenseRdbmsExtensionTables_kpi
                         DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
-#endif
+            #endif
 
             #region Postgresql DDL
             //Create "createdb_cmd"
@@ -826,14 +830,14 @@ namespace ItemSenseRDBMService
                 string errMsg = "CreateItemSenseRdbmsExtensionTables Exception: " + ex.Message + "(" + ex.GetType() + ")";
                 if (null != ex.InnerException)
                     errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
+                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId); eventId++;
             }
 
             #if (DEBUG)
             #region debug_CreateItemSenseRdbmsExtensionTables_kpi
                         DateTime procTmEnd = DateTime.Now;
                         TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
+                        iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
             #endregion
             #endif
         }
