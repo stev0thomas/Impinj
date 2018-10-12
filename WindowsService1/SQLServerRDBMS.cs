@@ -881,7 +881,6 @@ namespace ItemSenseRDBMService
                 @"last_updt_time DateTime, PRIMARY KEY (upc_nbr, floor, zone_name, facility)); " +
                 @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{upc_inv_loc}_upc_floor_zone_fac') " +
                 @"CREATE UNIQUE INDEX  UK_{upc_inv_loc}_upc_floor_zone_fac ON {upc_inv_loc} (upc_nbr, floor, zone_name, facility); " +
-                @"dept (dept_nbr int, dept_desc varchar(128), zone_name varchar(128), floor varchar(128), facility varchar(128), PRIMARY KEY (dept_nbr)); " +
                 @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='item' AND xtype = 'U') CREATE TABLE " +
                 @"item (upc_nbr varchar(24), dept_nbr int, retail_price float, item_cost float, item_nbr int, avg_rate_of_sale float, " +
                 @"item_desc varchar(128), mfg_name varchar(128), shelf_qty int, on_hand int, PRIMARY KEY (upc_nbr)); ";

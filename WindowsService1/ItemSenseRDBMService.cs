@@ -718,7 +718,7 @@ namespace ImpinjItemSenseRDBMService
                             g_itemEventRecords.Add(rec);
                             string deb = rec.ItemEventRecToCsvString();
                             if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
-                                iLog.WriteEntry("Threshold Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
+                                iLog.WriteEntry("Item Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
 
                             break;
                         }
