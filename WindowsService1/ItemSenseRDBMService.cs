@@ -73,12 +73,12 @@ namespace ImpinjItemSenseRDBMService
         {
             InitializeComponent();
             iLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists("Impinj_IS_RDBMS_Log"))
+            if (!System.Diagnostics.EventLog.SourceExists("Impinj IS RDBMS Service"))
             {
                 System.Diagnostics.EventLog.CreateEventSource(
-                    "Impinj_IS_RDBMS_Log", "Impinj RDBMS Service");
+                    "Impinj IS RDBMS Service", "Impinj RDBMS Service");
             }
-            iLog.Source = "Impinj_IS_RDBMS_Log";
+            iLog.Source = "Impinj IS RDBMS Service";
             iLog.Log = "Impinj RDBMS Service";
 
             g_itemEventRecords = new ArrayList();
