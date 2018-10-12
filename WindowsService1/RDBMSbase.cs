@@ -38,8 +38,8 @@ namespace ItemSenseRDBMService
         public RDBMSbase(System.Collections.ArrayList mastEvent, System.Collections.ArrayList itemEvent, System.Collections.ArrayList thr, System.Collections.ArrayList itemFile)
         {
             iLog = new System.Diagnostics.EventLog();
-            iLog.Source = "Impinj_IS_RDBMS";
-            iLog.Log = "IS_RDBMS_Log";
+            iLog.Source = "ItemSense RDBMS Service";
+            iLog.Log = "Impinj IS RDBMS Service";
 
             itemEventRecords = new System.Collections.ArrayList();
             thrRecords = new System.Collections.ArrayList();
