@@ -405,7 +405,7 @@ namespace ItemSenseRDBMService
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
             const string cmdText = @"IF EXISTS(SELECT * FROM sysobjects WHERE name= '{upc_inv_loc}' AND xtype = 'U') " +
-                                   @"DELETE FROM {upc_inv_loc} WHERE DATEDIFF(Day, GETDATE(), last_updt_time) > {ext_hist_interval};";
+                                   @"DELETE FROM {upc_inv_loc} WHERE DATEDIFF(Day, last_updt_time, GETDATE()) > {ext_hist_interval};";
 
             string replText = cmdText.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
             string cfgCmdText = replText.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
@@ -453,9 +453,9 @@ namespace ItemSenseRDBMService
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
             const string cmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_raw_item_event_hist}' AND xtype = 'U') " +
-                                   @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(Second, GETDATE(), obsv_time) > {is_hist_interval}; " +
+                                   @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(day, obsv_time, getdate()) >  {is_hist_interval}; " +
                                    @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_threshold_hist}' AND xtype = 'U') " +
-                                   @"DELETE FROM {is_threshold_hist} WHERE DATEDIFF(Second, GETDATE(), observation_time) > {is_hist_interval}; ";
+                                   @"DELETE FROM {is_threshold_hist} WHERE DATEDIFF(day, observation_time, getdate()) > {is_hist_interval}; ";
 
             string replText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
             string repl2Text = replText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
@@ -881,7 +881,6 @@ namespace ItemSenseRDBMService
                 @"last_updt_time DateTime, PRIMARY KEY (upc_nbr, floor, zone_name, facility)); " +
                 @"IF NOT EXISTS (SELECT * FROM sysindexes WHERE name='UK_{upc_inv_loc}_upc_floor_zone_fac') " +
                 @"CREATE UNIQUE INDEX  UK_{upc_inv_loc}_upc_floor_zone_fac ON {upc_inv_loc} (upc_nbr, floor, zone_name, facility); " +
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='dept' AND xtype = 'U') CREATE TABLE " +
                 @"dept (dept_nbr int, dept_desc varchar(128), zone_name varchar(128), floor varchar(128), facility varchar(128), PRIMARY KEY (dept_nbr)); " +
                 @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='item' AND xtype = 'U') CREATE TABLE " +
                 @"item (upc_nbr varchar(24), dept_nbr int, retail_price float, item_cost float, item_nbr int, avg_rate_of_sale float, " +
