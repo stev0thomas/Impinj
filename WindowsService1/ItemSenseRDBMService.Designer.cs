@@ -37,6 +37,6 @@
 
         #endregion
 
-        private System.Diagnostics.EventLog eLog;
+       
     }
 }

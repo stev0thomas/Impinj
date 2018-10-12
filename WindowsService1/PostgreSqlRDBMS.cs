@@ -299,9 +299,6 @@ namespace ItemSenseRDBMService
                 //Truncate the ItemSense Tables to size configured in app.config
                 TruncateItemSenseHist();
 
-                //Insert into summary tables based on business logic tied to zones assigned to threshold data
-                InsertThresholdSummaryData();
-
                 //Finally Truncate the Extension Tables to size configured
                 TruncateExtensionTables();
 
@@ -323,84 +320,7 @@ namespace ItemSenseRDBMService
             #endif
         }
 
-        private void InsertThresholdSummaryData()
-        {
-            #if (DEBUG)
-            #region debug_InsertThresholdSummaryData_kpi
-                        DateTime blockTmSt = System.DateTime.Now;
-                        iLog.WriteEntry("InsertThresholdSummaryData started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
-            #endregion
-            #endif
 
-            #region Postgresql DDL
-                        //Do Not Alter - These strings are modified via the app.cfg
-                        //Point of Sale Summary
-                        const string posCmdText = @"INSERT INTO {pos} (upc_nbr, qty_sold, qty_returned, last_updt_time) " +
-                                         @"SELECT DISTINCT e1.upc_nbr, SUM(CASE e1.zone_name WHEN '{pos_sold}' THEN 1 ELSE 0 END) AS qty_sold, " +
-                                         @"SUM(CASE e1.zone_name WHEN '{pos_return}' THEN 1 ELSE 0 END) AS qty_returned, current_timestamp as last_updt_time FROM {epc_master} e1 " +
-                                         @"WHERE e1.last_updt_time = (SELECT MAX(last_updt_time) FROM {epc_master} e2 where e1.epc_nbr = e2.epc_nbr) " +
-                                         @"AND current_timestamp - e1.last_updt_time <= interval '{is_hist_interval} seconds' " +
-                                         @"AND e1.zone_name = '{pos_sold}' OR e1.zone_name = '{pos_return}' " +
-                                         @"GROUP BY upc_nbr " +
-                                         @"ON CONFLICT (upc_nbr, qty_sold, qty_returned) DO UPDATE SET qty_sold = excluded.qty_sold, qty_returned = excluded.qty_returned, last_updt_time = excluded.last_updt_time; ";
-
-                        string replText = posCmdText.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
-                        string repl2Text = replText.Replace("{pos_sold}", ConfigurationManager.AppSettings["PosQtySoldZoneName"]);
-                        string repl3Text = repl2Text.Replace("{pos_return}", ConfigurationManager.AppSettings["PosQtyReturnedZoneName"]);
-                        string repl4Text = repl3Text.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
-                        string cfgCmdText = repl4Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
-
-                        //Shipping & Receiving Summary
-                        const string shpCmdText = @"INSERT INTO {ship_rcv} (upc_nbr, qty_shipped, qty_received, last_updt_time) " +
-                                         @"SELECT DISTINCT e1.upc_nbr, SUM(CASE e1.zone_name WHEN '{shipped}' THEN 1 ELSE 0 END) AS qty_shipped, " +
-                                         @"SUM(CASE e1.zone_name WHEN '{received}' THEN 1 ELSE 0 END) AS qty_received, current_timestamp as last_updt_time FROM {epc_master} e1 " +
-                                         @"WHERE e1.last_updt_time = (SELECT MAX(last_updt_time) FROM {epc_master} e2 where e1.epc_nbr = e2.epc_nbr) " +
-                                         @"AND current_timestamp - e1.last_updt_time <= interval '{is_hist_interval} seconds' " +
-                                         @"AND e1.zone_name = '{shipped}' OR e1.zone_name = '{received}' " +
-                                         @"GROUP BY upc_nbr " +
-                                         @"ON CONFLICT (upc_nbr, qty_shipped, qty_received) DO UPDATE SET qty_shipped = excluded.qty_shipped, " +
-                                         @"qty_received = excluded.qty_receiveed, last_updt_time = excluded.last_updt_time; ";
-
-                        string rplText = shpCmdText.Replace("{ship_rcv}", ConfigurationManager.AppSettings["ItemSenseExtensionShipRecvTableName"]);
-                        string rpl2Text = replText.Replace("{shipped}", ConfigurationManager.AppSettings["ShipRcvQtyShippedZoneName"]);
-                        string rpl3Text = repl2Text.Replace("{received}", ConfigurationManager.AppSettings["ShipRcvQtyReceivedZoneName"]);
-                        string rpl4Text = repl3Text.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
-                        string postCmdText = repl4Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
-
-            #endregion
-
-            try
-            {
-                string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
-                NpgsqlConnection conn = new NpgsqlConnection(connStr);
-                NpgsqlCommand insPOSdb_cmd = new NpgsqlCommand(cfgCmdText, conn);
-                conn.Open();
-
-                // Execute the insert into pos table
-                insPOSdb_cmd.ExecuteNonQuery();
-
-                NpgsqlCommand insSRdb_cmd = new NpgsqlCommand(postCmdText, conn);
-                // Execute the insert into ship_rcv table
-                insSRdb_cmd.ExecuteNonQuery();
-
-                conn.Close();
-            }
-            catch (Exception ex)
-            {
-                string errMsg = "InsertThresholdSummaryData Exception: " + ex.Message + "(" + ex.GetType() + ")";
-                if (null != ex.InnerException)
-                    errMsg += Environment.NewLine + ex.InnerException.Message;
-                iLog.WriteEntry(errMsg, EventLogEntryType.Error, eventId);
-            }
-
-            #if (DEBUG)
-            #region debug_InsertThresholdSummaryData_kpi
-                        DateTime procTmEnd = DateTime.Now;
-                        TimeSpan procTmSpan = procTmEnd.Subtract(blockTmSt);
-                        iLog.WriteEntry("InsertThresholdSummaryData completed(ms): " + procTmSpan.Milliseconds.ToString(), EventLogEntryType.Information, eventId);
-            #endregion
-            #endif
-        }
 
         /// <summary>
         /// Truncates all summary table information in the Extension 
@@ -418,16 +338,11 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"DELETE FROM {pos} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days'; " +
-                                   @"DELETE FROM {ship_rcv} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days'; " +
-                                   @"DELETE FROM {upc_inv_loc} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days';";
+            const string cmdText = @"DELETE FROM {upc_inv_loc} WHERE current_timestamp - last_updt_time > interval '{ext_hist_interval} days';";
 
-            string replText = cmdText.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
-            string repl2Text = replText.Replace("{ship_rcv}", ConfigurationManager.AppSettings["ItemSenseExtensionShipRecvTableName"]);
-            string repl3Text = repl2Text.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
-            string cfgCmdText = repl3Text.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
-
-#endregion
+            string replText = cmdText.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
+            string cfgCmdText = replText.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
+            #endregion
 
             try
             {
@@ -470,13 +385,11 @@ namespace ItemSenseRDBMService
                         //Do Not Alter - These strings are modified via the app.cfg
                         //Update History "updatedb_cmd"
                         const string cmdText = @"DELETE FROM {is_raw_item_event_hist} WHERE current_timestamp - obsv_time > interval '{is_hist_interval} seconds'; " +
-                                               @"DELETE FROM {is_threshold_hist} WHERE current_timestamp - observation_time > interval '{is_hist_interval} seconds'; " +
-                                               @"DELETE FROM {smoothed_item_event_hist} WHERE current_timestamp - calc_time > interval '{is_hist_interval} seconds'; ";
+                            @"DELETE FROM {is_threshold_hist} WHERE current_timestamp - observation_time > interval '{is_hist_interval} seconds'; ";
 
                         string replText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
                         string repl2Text = replText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
-                        string repl3Text = repl2Text.Replace("{smoothed_item_event_hist}", ConfigurationManager.AppSettings["SmoothedItemEventHistTableName"]);
-                        string cfgCmdText = repl3Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
+                        string cfgCmdText = repl2Text.Replace("{is_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
 
             #endregion
 
@@ -868,12 +781,12 @@ namespace ItemSenseRDBMService
 
         private void CreateItemSenseRdbmsExtensionTables()
         {
-            #if (DEBUG)
+#if (DEBUG)
             #region debug_CreateItemSenseRdbmsExtensionTables_kpi
                         DateTime blockTmSt = System.DateTime.Now;
                         iLog.WriteEntry("CreateItemSenseRdbmsExtensionTables started: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId);
             #endregion
-            #endif
+#endif
 
             #region Postgresql DDL
             //Create "createdb_cmd"
@@ -890,21 +803,13 @@ namespace ItemSenseRDBMService
                 @"CREATE TABLE IF NOT EXISTS dept (dept_nbr int, dept_desc character varying(128), zone_name character varying(128), floor character varying(128), " +
                 @"facility character varying(128), PRIMARY KEY (dept_nbr))WITH(OIDS= FALSE); " +
                 @"CREATE TABLE IF NOT EXISTS item (upc_nbr character varying(24), dept_nbr int, retail_price float(2), item_cost float(2), item_nbr bigint, avg_rate_of_sale float(1), " +
-                @"item_desc character varying(128), mfg_name character varying(128), shelf_qty int, on_hand int, PRIMARY KEY (upc_nbr))WITH(OIDS= FALSE); " +
-                @"CREATE TABLE IF NOT EXISTS {pos} (upc_nbr character varying(24) NOT NULL, qty_sold bigint, qty_returned bigint, last_updt_time timestamptz DEFAULT current_timestamp, " +
-                @"PRIMARY KEY (upc_nbr, qty_sold, qty_returned))WITH(OIDS= FALSE); " +
-                @"CREATE UNIQUE INDEX IF NOT EXISTS UK_{pos}_upc_lastupdt ON {pos} (upc_nbr, qty_sold, qty_returned); " +
-                @"CREATE TABLE IF NOT EXISTS {ship_rcv} (upc_nbr character varying(24) NOT NULL, qty_shipped bigint, qty_received bigint, last_updt_time timestamptz DEFAULT current_timestamp, " +
-                @"PRIMARY KEY (upc_nbr, qty_shipped, qty_received))WITH(OIDS= FALSE); " +
-                @"CREATE UNIQUE INDEX IF NOT EXISTS UK_{ship_rcv}_upc_ship_rcvd ON {ship_rcv} (upc_nbr, qty_shipped, qty_received); ";
+                @"item_desc character varying(128), mfg_name character varying(128), shelf_qty int, on_hand int, PRIMARY KEY (upc_nbr))WITH(OIDS= FALSE); ";
 
 
             string rplTxt = cmdText.Replace("{epc_master}", ConfigurationManager.AppSettings["ItemSenseExtensionEpcMasterTableName"]);
-            string rpl2Text = rplTxt.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
-            string rpl3Text = rpl2Text.Replace("{pos}", ConfigurationManager.AppSettings["ItemSenseExtensionPosTableName"]);
-            string cfgCmdText = rpl3Text.Replace("{ship_rcv}", ConfigurationManager.AppSettings["ItemSenseExtensionShipRecvTableName"]);
+            string cfgCmdText = rplTxt.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
 
-#endregion
+            #endregion
 
             try
             {
