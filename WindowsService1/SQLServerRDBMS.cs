@@ -283,7 +283,7 @@ namespace ItemSenseRDBMService
             string postCfgCmdText = postRplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
 
-#endregion
+            #endregion
 
             string connStr = ConfigurationManager.AppSettings["DbConnectionString"];
             System.Data.DataTableReader reader = thrRecs.CreateDataReader();
