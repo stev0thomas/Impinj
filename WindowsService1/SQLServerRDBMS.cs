@@ -404,7 +404,7 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"IF EXISTS(SELECT * FROM sysobjects WHERE name= '{upc_inv_loc}' AND xtype = 'U') " +
+            const string cmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name= '{upc_inv_loc}' AND xtype = 'U') " +
                                    @"DELETE FROM {upc_inv_loc} WHERE DATEDIFF(Day, last_updt_time, GETDATE()) > {ext_hist_interval};";
 
             string replText = cmdText.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
@@ -452,9 +452,7 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_raw_item_event_hist}' AND xtype = 'U') " +
-                                   @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(day, obsv_time, getdate()) >  {is_hist_interval}; " +
-                                   @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_threshold_hist}' AND xtype = 'U') " +
+            const string cmdText = @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(day, obsv_time, getdate()) >  {is_hist_interval}; " +
                                    @"DELETE FROM {is_threshold_hist} WHERE DATEDIFF(day, observation_time, getdate()) > {is_hist_interval}; ";
 
             string replText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
@@ -682,15 +680,16 @@ namespace ItemSenseRDBMService
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
-            const string cmdText = @"SELECT i1.epc_nbr, i1.obsv_time, i1.tag_id, i1.to_zone, i1.to_floor, i1.to_fac, " +
+            const string cmdText =  @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_raw_item_event_hist}' AND xtype = 'U') " +
+                                    @"SELECT i1.epc_nbr, i1.obsv_time, i1.tag_id, i1.to_zone, i1.to_floor, i1.to_fac, " +
                                     @"i1.to_x, i1.to_y FROM {is_raw_item_event_hist} i1 " +
                                     @"WHERE i1.obsv_time = (SELECT MAX(obsv_time) FROM {is_raw_item_event_hist} i2 WHERE i1.epc_nbr = i2.epc_nbr) " +
                                     @"GROUP BY epc_nbr, obsv_time, tag_id, to_zone, to_floor, to_fac, to_x, to_y; ";
 
             string cfgCmdText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
 
-            string updCmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='is_upc_tmp' AND xtype = 'U') DROP TABLE is_upc_tmp; " +
-                @"CREATE TABLE is_upc_tmp (epc_nbr varchar(128) NOT NULL,  last_obsv_time DateTime, tag_id varchar(128), " +
+            string updCmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='is_upc_tmp_item' AND xtype = 'U') DROP TABLE is_upc_tmp_item; " +
+                @"CREATE TABLE is_upc_tmp_item (epc_nbr varchar(128) NOT NULL,  last_obsv_time DateTime, tag_id varchar(128), " +
                 @"zone_name varchar(128), floor varchar(128), facility varchar(128), x_coord float, " +
                 @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime,  PRIMARY KEY(epc_nbr)); ";
 
@@ -743,7 +742,7 @@ namespace ItemSenseRDBMService
                 //Bulk insert into the temp upc table events just read
                 using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                 {
-                    bulkCopy.DestinationTableName = "is_upc_tmp";
+                    bulkCopy.DestinationTableName = "is_upc_tmp_item";
                     bulkCopy.WriteToServer(reader);
                 }
 
@@ -778,14 +777,15 @@ namespace ItemSenseRDBMService
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
-            const string cmdText = @"SELECT i1.epc_nbr, i1.observation_time, i1.to_zone FROM {is_threshold_hist} i1 " +
+            const string cmdText =  @"IF EXISTS (SELECT * FROM sysobjects WHERE name='{is_threshold_hist}' AND xtype = 'U') " +
+                                    @"SELECT i1.epc_nbr, i1.observation_time, i1.to_zone FROM {is_threshold_hist} i1 " +
                                     @"WHERE i1.observation_time = (SELECT MAX(observation_time) FROM {is_threshold_hist} i2 WHERE i1.epc_nbr = i2.epc_nbr) " +
                                     @"GROUP BY epc_nbr, observation_time, to_zone; ";
 
             string cfgCmdText = cmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
 
-            string updCmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='is_upc_tmp' AND xtype = 'U') DROP TABLE is_upc_tmp; " +
-                @"CREATE TABLE is_upc_tmp (epc_nbr varchar(128) NOT NULL,  last_obsv_time DateTime, tag_id varchar(128), " +
+            string updCmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name='is_upc_tmp_thresh' AND xtype = 'U') DROP TABLE is_upc_tmp_thresh; " +
+                @"CREATE TABLE is_upc_tmp_thresh (epc_nbr varchar(128) NOT NULL,  last_obsv_time DateTime, tag_id varchar(128), " +
                 @"zone_name varchar(128), floor varchar(128), facility varchar(128), x_coord float, " +
                 @"y_coord float, upc_nbr varchar(24), last_updt_time DateTime, PRIMARY KEY(epc_nbr)); ";
 
@@ -839,7 +839,7 @@ namespace ItemSenseRDBMService
                 //Bulk insert into the temp upc table events just read
                 using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                 {
-                    bulkCopy.DestinationTableName = "is_upc_tmp";
+                    bulkCopy.DestinationTableName = "is_upc_tmp_thresh";
                     bulkCopy.WriteToServer(reader);
                 }
                 conn.Close();
