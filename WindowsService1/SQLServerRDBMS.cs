@@ -405,7 +405,7 @@ namespace ItemSenseRDBMService
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
             const string cmdText = @"IF EXISTS (SELECT * FROM sysobjects WHERE name= '{upc_inv_loc}' AND xtype = 'U') " +
-                                   @"DELETE FROM {upc_inv_loc} WHERE DATEDIFF(Day, last_updt_time, GETDATE()) > {ext_hist_interval};";
+                                   @"DELETE FROM {upc_inv_loc} WHERE DATEDIFF(Day, last_updt_time, GETDATE()) > interval '{ext_hist_interval} days';";
 
             string replText = cmdText.Replace("{ext_hist_interval}", ConfigurationManager.AppSettings["ItemSenseEventProcessingHistoryInterval(secs)"]);
             string cfgCmdText = replText.Replace("{upc_inv_loc}", ConfigurationManager.AppSettings["ItemSenseExtensionUpcInventoryLocationTableName"]);
@@ -452,8 +452,8 @@ namespace ItemSenseRDBMService
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
             //Update History "updatedb_cmd"
-            const string cmdText = @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(day, obsv_time, getdate()) >  {is_hist_interval}; " +
-                                   @"DELETE FROM {is_threshold_hist} WHERE DATEDIFF(day, observation_time, getdate()) > {is_hist_interval}; ";
+            const string cmdText = @"DELETE FROM {is_raw_item_event_hist} WHERE DATEDIFF(second, obsv_time, getdate()) > interval '{is_hist_interval} seconds' ; " +
+                                   @"DELETE FROM {is_threshold_hist} WHERE DATEDIFF(second, observation_time, getdate()) > interval '{is_hist_interval} seconds' ; ";
 
             string replText = cmdText.Replace("{is_raw_item_event_hist}", ConfigurationManager.AppSettings["ItemSenseRawItemEventHistTableName"]);
             string repl2Text = replText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
