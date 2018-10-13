@@ -584,7 +584,7 @@ namespace ItemSenseRDBMService
 
         public static string GetCustomUpc(string tagId)
         {
-            string retVal = tagId;
+            string retVal = tagId.Substring(0, 11);
 
             try
             {
