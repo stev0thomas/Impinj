@@ -25,29 +25,33 @@ namespace ItemSenseRDBMService
          [JsonProperty("threshold", NullValueHandling = NullValueHandling.Ignore)]
         public string Threshold { get; set; } = null;
 
+        [JsonProperty("thresholdId", NullValueHandling = NullValueHandling.Ignore)]
+        public long ThresholdId { get; set; } = 0;
+
         [JsonProperty("confidence", NullValueHandling = NullValueHandling.Ignore)]
         public double Confidence { get; set; } = 0;
 
        [JsonProperty("jobId", NullValueHandling = NullValueHandling.Ignore)]
         public string JobId { get; set; } = null;
 
-        [JsonProperty("dockDoor", NullValueHandling = NullValueHandling.Ignore)]
-        public string DockDoor { get; set; } = null;
+        [JsonProperty("jobName", NullValueHandling = NullValueHandling.Ignore)]
+        public string JobName { get; set; } = null;
 
         public ThresholdRec()
         {
         }
 
-        public ThresholdRec(string epc, DateTime observationTime, string fromZone, string toZone, string threshold, double confidence, string jobId, string dockDoor )
+        public ThresholdRec(string epc, DateTime observationTime, string fromZone, string toZone, string threshold, long thresholdId, double confidence, string jobId, string jobName )
         {
             Epc = epc;
             ObservationTime = observationTime;
             FromZone = fromZone;
             ToZone = toZone;
             Threshold = threshold;
+            ThresholdId = ThresholdId;
             Confidence = confidence;
             JobId = jobId;
-            DockDoor = dockDoor;
+            JobName = jobName;
         }
 
         public string ThresholdRecToCsvString()
@@ -61,7 +65,7 @@ namespace ItemSenseRDBMService
                 Threshold,
                 Confidence,
                 JobId,
-                DockDoor
+                JobName
                 );
         }
     }

@@ -210,21 +210,21 @@ namespace ItemSenseRDBMService
                         //Do Not Alter - These strings are modified via the app.cfg
                         //Drop and Create "createdb_cmd"
                         const string cmdText = @"CREATE TABLE IF NOT EXISTS {is_threshold_hist} (epc_nbr character varying(128) NOT NULL, observation_time timestamptz, from_zone character varying(128), " +
-                            @"to_zone character varying(128), threshold character varying(128), confidence float(1), job_id character varying(128), dock_door character varying(128), PRIMARY KEY (epc_nbr, observation_time) " +
+                            @"to_zone character varying(128), threshold character varying(128), confidence float(1), job_id character varying(128), job_name character varying(128), PRIMARY KEY (epc_nbr, observation_time) " +
                             @")WITH(OIDS= FALSE); " +
                             @"DROP TABLE IF EXISTS {is_threshold}; CREATE TABLE {is_threshold} (epc_nbr character varying(128) NOT NULL, observation_time timestamptz, " +
                             @"from_zone character varying(128), to_zone character varying(128), threshold character varying(128), confidence float(1), job_id character varying(128), " +
-                            @"dock_door character varying(128), PRIMARY KEY (epc_nbr, observation_time))WITH(OIDS= FALSE);";
+                            @"job_name character varying(128), PRIMARY KEY (epc_nbr, observation_time))WITH(OIDS= FALSE);";
                         string rplTxt = cmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
                         string cfgCmdText = rplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
                         //Bulk Insert 
-                        string tmpTxt = "COPY {is_threshold}(epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, dock_door) FROM STDIN WITH DELIMITER ',' CSV";
+                        string tmpTxt = "COPY {is_threshold}(epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, job_name) FROM STDIN WITH DELIMITER ',' CSV";
                         string impText = tmpTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
                         //Update History "updatedb_cmd
-                        const string postText = @"INSERT INTO {is_threshold_hist} (epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, dock_door) " +
-                            @"SELECT epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, dock_door FROM {is_threshold}; ";
+                        const string postText = @"INSERT INTO {is_threshold_hist} (epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, job_name) " +
+                            @"SELECT epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, job_name FROM {is_threshold}; ";
                         string postRplTxt = postText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
                         string postCfgCmdText = postRplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
             #endregion
@@ -703,9 +703,9 @@ namespace ItemSenseRDBMService
 
             #region Postgresql DDL
             //Do Not Alter - These strings are modified via the app.cfg
-            const string cmdText = @"SELECT i1.epc_nbr, i1.observation_time, i1.threshold, i1.dock_door, i1.to_zone FROM {is_threshold_hist} i1 " +
+            const string cmdText = @"SELECT i1.epc_nbr, i1.observation_time, i1.threshold, i1.job_name, i1.to_zone FROM {is_threshold_hist} i1 " +
                                    @"WHERE i1.observation_time = (SELECT MAX(observation_time) FROM {is_threshold_hist} i2 WHERE i1.epc_nbr = i2.epc_nbr) " +
-                                   @"GROUP BY epc_nbr, observation_time, threshold, dock_door, to_zone; ";
+                                   @"GROUP BY epc_nbr, observation_time, threshold, job_name, to_zone; ";
 
             string cfgCmdText = cmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
 

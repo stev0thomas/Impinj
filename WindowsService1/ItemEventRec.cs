@@ -21,6 +21,9 @@ namespace ItemSenseRDBMService
         [JsonProperty("jobId", NullValueHandling = NullValueHandling.Ignore)]
         public string JobId { get; set; } = null;
 
+        [JsonProperty("jobName", NullValueHandling = NullValueHandling.Ignore)]
+        public string JobName { get; set; } = null;
+
         [JsonProperty("fromZone", NullValueHandling = NullValueHandling.Ignore)]
         public string FromZone { get; set; } = null;
 

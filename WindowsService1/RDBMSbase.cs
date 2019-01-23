@@ -267,7 +267,7 @@ namespace ItemSenseRDBMService
                     switch (recType)
                     {
                         case RecordType.ItemEvent: msg = "epc,tag_id,job_id,from_zone,from_floor,to_zone,to_floor,from_facility,to_facility,from_x,from_y,to_x,to_y,observation_time"; break;
-                        case RecordType.Threshold: msg = "epc,observation_time,from_zone,to_zone,threshold,confidence,job_id,dock_door"; break;
+                        case RecordType.Threshold: msg = "epc,observation_time,from_zone,to_zone,threshold,confidence,job_id,job_name"; break;
                         default: break;
                     }
                 }
@@ -443,7 +443,7 @@ namespace ItemSenseRDBMService
 #endregion
 
                 foreach (ThresholdRec rec in thrRecords)
-                    thrRecs.Rows.Add(rec.Epc, rec.ObservationTime, rec.FromZone, rec.ToZone, rec.Threshold, rec.Confidence, rec.JobId, rec.DockDoor);
+                    thrRecs.Rows.Add(rec.Epc, rec.ObservationTime, rec.FromZone, rec.ToZone, rec.Threshold, rec.Confidence, rec.JobId, rec.JobName);
             }
             catch (Exception ex)
             {

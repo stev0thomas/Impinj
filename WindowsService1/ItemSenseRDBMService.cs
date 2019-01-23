@@ -22,6 +22,7 @@ using System.Configuration;
 using System.IO;
 using System.Net;
 using ItemSenseRDBMService;
+using System.Web.Script.Serialization;
 
 namespace ImpinjItemSenseRDBMService
 {
@@ -507,20 +508,13 @@ namespace ImpinjItemSenseRDBMService
             }
         }
 
- 
- 
-        /// <summary>
-        /// Message received event handler - AMQP Callback for Threshold Events
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
         private static void Threshold_Received(object sender, BasicDeliverEventArgs e)
         {
             #if (DEBUG)
             #region debug_amqp_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
                         iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
-
             #endregion
             #endif
 
@@ -544,62 +538,22 @@ namespace ImpinjItemSenseRDBMService
             var message = Encoding.UTF8.GetString(body);
             try
             {
-                string msg = message.Replace("\\", string.Empty);
-                string cln = msg.Replace("\"", string.Empty);
-                string[] msgFields = cln.Split(',');
-                int recCnt = msgFields.Count();
-                switch (recCnt)
-                {
-                    case 8:  //It's a threshold job record
-                        {
-                            ThresholdRec rec = new ThresholdRec();
-                            for (int i = 0; i < msgFields.Count(); i++)
-                            {
-                                string[] parms = null;
-                                switch (i)
-                                {
-                                    case 0: parms = msgFields[i].Split(':'); rec.Epc = parms[1]; break;
-                                    case 1:
-                                        {
-                                            string x = msgFields[i].Replace("observationTime:", string.Empty);
-                                            rec.ObservationTime = Convert.ToDateTime(x);
-                                            break;
-                                        }
-                                    case 2: parms = msgFields[i].Split(':'); rec.FromZone = parms[1]; break;
-                                    case 3: parms = msgFields[i].Split(':'); rec.ToZone = parms[1]; break;
-                                    case 4: parms = msgFields[i].Split(':'); rec.Threshold = parms[1]; break;
-                                    case 5:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            if (parms[1].Length > 0 & parms[1] != @"null")
-                                                rec.Confidence = Convert.ToDouble(parms[1]);
-                                            break;
-                                        }
-                                    case 6: parms = msgFields[i].Split(':'); rec.JobId = parms[1]; break;
-                                    case 7:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            string x = parms[1];
-                                            rec.DockDoor = x.Replace("}", string.Empty);
-                                            break;
-                                        }
-                                    default: break;
-                                }
-                            }
-                            g_thrRecords.Add(rec);
-                            string deb = rec.ThresholdRecToCsvString();
-                            if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
-                                iLog.WriteEntry("Threshold Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
+                var msg = new JavaScriptSerializer().Deserialize<ThresholdRec>(message);
 
-                            break;
-                        }
-                    default:
-                        {
-                            iLog.WriteEntry("Unexpected number of fields received in Threshold AMQP Event Handler.  Expected 8 Received " + msgFields.Count(),
-                                EventLogEntryType.Error, eventId); eventId++;
-                            break;
-                        }
-                }
+                ThresholdRec rec = new ThresholdRec();
+                rec.Epc = msg.Epc;
+                rec.FromZone = msg.FromZone;
+                rec.ToZone = msg.ToZone;
+                rec.Threshold = msg.Threshold;
+                rec.ThresholdId = msg.ThresholdId;
+                rec.Confidence = msg.Confidence;
+                rec.JobId = msg.JobId;
+                rec.JobName = msg.JobName;
+
+                g_thrRecords.Add(rec);
+                string deb = rec.ThresholdRecToCsvString();
+                if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                    iLog.WriteEntry("Threshold Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
             }
             catch (Exception ex)
             {
@@ -617,7 +571,9 @@ namespace ImpinjItemSenseRDBMService
 
             #endregion
             #endif
+
         }
+
 
         /// <summary>
         /// Message received event handler - AMQP Callback Item and Item Events
@@ -630,7 +586,6 @@ namespace ImpinjItemSenseRDBMService
             #region debug_amqp_event_kpi
                         DateTime blockTmSt = System.DateTime.Now;
                         iLog.WriteEntry("AMQP Message Received: " + blockTmSt.ToLongTimeString(), EventLogEntryType.Information, eventId); eventId++;
-
             #endregion
             #endif
 
@@ -646,90 +601,43 @@ namespace ImpinjItemSenseRDBMService
                         DateTime blockTmEnd = System.DateTime.Now;
                         TimeSpan blockSpan = blockTmEnd.Subtract(blockTmSt);
                         iLog.WriteEntry("AMQP Queue WaitTime(ms): " + blockSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
-
             #endregion
             #endif
 
             var body = e.Body;
             var message = Encoding.UTF8.GetString(body);
-
             try
             {
-                string msg = message.Replace("\\", string.Empty);
-                string cln = msg.Replace("\"", string.Empty);
-                string[] msgFields = cln.Split(',');
-                int recCnt = msgFields.Count();
-                switch (recCnt)
+                var msg = new JavaScriptSerializer().Deserialize<ItemEventRec>(message);
+
+                ItemEventRec rec = new ItemEventRec();
+                rec.Epc = msg.Epc;
+                rec.FromZone = msg.FromZone;
+                rec.ToZone = msg.ToZone;
+                rec.FromFacility = msg.FromFacility;
+                rec.ToFacility = msg.ToFacility;
+                rec.FromFloor = msg.FromFloor;
+                rec.ToFloor = msg.ToFloor;
+                rec.FromX = msg.FromX;
+                rec.ToX = msg.ToX;
+                rec.FromY = msg.FromY;
+                rec.ToY = msg.ToY;
+                rec.JobId = msg.JobId;
+                rec.JobName = msg.JobName;
+                rec.ObservationTime = msg.ObservationTime;
+
+                //Check to see if timer is processing the global array list
+                if (waitOne)
                 {
-                    case 14:  //It's an Item Event record
-                        {
-                            ItemEventRec rec = new ItemEventRec();
-                            for (int i = 0; i < msgFields.Count(); i++)
-                            {
-                                string[] parms = null;
-                                switch (i)
-                                {
-                                    case 0: parms = msgFields[i].Split(':'); rec.Epc = parms[1]; break;
-                                    case 1: parms = msgFields[i].Split(':'); rec.TagId = parms[1]; break;
-                                    case 2: parms = msgFields[i].Split(':'); rec.JobId = parms[1]; break;
-                                    case 3: parms = msgFields[i].Split(':'); rec.FromZone = parms[1]; break;
-                                    case 4: parms = msgFields[i].Split(':'); rec.FromFloor = parms[1]; break;
-                                    case 5: parms = msgFields[i].Split(':'); rec.ToZone = parms[1]; break;
-                                    case 6: parms = msgFields[i].Split(':'); rec.ToFloor = parms[1]; break;
-                                    case 7: parms = msgFields[i].Split(':'); rec.FromFacility = parms[1]; break;
-                                    case 8: parms = msgFields[i].Split(':'); rec.ToFacility = parms[1]; break;
-                                    case 9:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            if (parms[1].Length > 0 & parms[1] != @"null")
-                                                rec.FromX = Convert.ToDouble(parms[1]);
-                                            break;
-                                        }
-                                    case 10:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            if (parms[1].Length > 0 & parms[1] != @"null")
-                                                rec.FromY = Convert.ToDouble(parms[1]);
-                                            break;
-                                        }
-                                    case 11:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            if (parms[1].Length > 0 & parms[1] != @"null")
-                                                rec.ToX = Convert.ToDouble(parms[1]);
-                                            break;
-                                        }
-                                    case 12:
-                                        {
-                                            parms = msgFields[i].Split(':');
-                                            if (parms[1].Length > 0 & parms[1] != @"null")
-                                                rec.ToY = Convert.ToDouble(parms[1]);
-                                            break;
-                                        }
-                                    case 13:
-                                        {
-                                            string y = msgFields[i].Replace("observationTime:", string.Empty);
-                                            rec.ObservationTime = Convert.ToDateTime(y.Replace("}", string.Empty));
-                                            break;
-                                        }
-                                    default: break;
-                                }
-                            }
-                            g_itemEventRecords.Add(rec);
-                            string deb = rec.ItemEventRecToCsvString();
-                            if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
-                                iLog.WriteEntry("Item Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
-
-                            break;
-                        }
-                    default:
-                        {
-                            iLog.WriteEntry("Unexpected number of fields received in Item_Event AMQP Event Handler.  Expected 14 Received " + msgFields.Count(),
-                                EventLogEntryType.Error, eventId); eventId++;
-
-                            break;
-                        }
+                    do
+                        Thread.Sleep(50);
+                    while (waitOne);
                 }
+
+                g_itemEventRecords.Add(rec);
+                string deb = rec.ItemEventRecToCsvString();
+                if (Convert.ToBoolean(ConfigurationManager.AppSettings["ShowTagsInEventViewer"]))
+                    iLog.WriteEntry("Item Event Received: " + deb, EventLogEntryType.Information, eventId); eventId++;
             }
             catch (Exception ex)
             {
@@ -744,10 +652,12 @@ namespace ImpinjItemSenseRDBMService
                         DateTime procEndTm = DateTime.Now;
                         TimeSpan procTmSpan = procEndTm.Subtract(blockTmEnd);
                         iLog.WriteEntry("Received: " + message + " Completed(ms): " + procTmSpan.TotalMilliseconds.ToString(), EventLogEntryType.Information, eventId); eventId++;
-
             #endregion
             #endif
+
         }
+
+  
 
         private void OnTimer(object sender, ElapsedEventArgs e)
         {

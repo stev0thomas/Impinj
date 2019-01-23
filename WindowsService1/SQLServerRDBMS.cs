@@ -270,15 +270,15 @@ namespace ItemSenseRDBMService
             //Drop and Create "updatedb_cmd"
             const string cmdText = @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='{is_threshold_hist}' AND xtype = 'U') CREATE TABLE " +
                 @"{is_threshold_hist} (epc_nbr VARCHAR(128) NOT NULL, observation_time DateTime, from_zone VARCHAR(128), to_zone VARCHAR(128)," +
-                @"threshold VARCHAR(128), confidence float, job_id VARCHAR(128), dock_door VARCHAR(128), PRIMARY KEY(epc_nbr, observation_time)); " +
+                @"threshold VARCHAR(128), confidence float, job_id VARCHAR(128), job_name VARCHAR(128), PRIMARY KEY(epc_nbr, observation_time)); " +
                 @"DROP TABLE IF EXISTS {is_threshold}; CREATE TABLE {is_threshold} (epc_nbr VARCHAR(128) NOT NULL, observation_time DateTime, " +
-                @"from_zone VARCHAR(128), to_zone VARCHAR(128), threshold VARCHAR(128), confidence float, job_id VARCHAR(128), dock_door VARCHAR(128));";
+                @"from_zone VARCHAR(128), to_zone VARCHAR(128), threshold VARCHAR(128), confidence float, job_id VARCHAR(128), job_name VARCHAR(128));";
             string rplTxt = cmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
             string cfgCmdText = rplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
             //Update History "updatedb_cmd"
-            const string postCmdText = @"INSERT INTO {is_threshold_hist} (epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, dock_door) " +
-                @"SELECT epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, dock_door FROM {is_threshold}; ";
+            const string postCmdText = @"INSERT INTO {is_threshold_hist} (epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, job_name) " +
+                @"SELECT epc_nbr, observation_time, from_zone, to_zone, threshold, confidence, job_id, job_name FROM {is_threshold}; ";
             string postRplTxt = postCmdText.Replace("{is_threshold_hist}", ConfigurationManager.AppSettings["ItemSenseThresholdHistTableName"]);
             string postCfgCmdText = postRplTxt.Replace("{is_threshold}", ConfigurationManager.AppSettings["ItemSenseThresholdTableName"]);
 
