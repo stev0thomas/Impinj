@@ -8,7 +8,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Timers;
@@ -22,7 +21,6 @@ using System.Configuration;
 using System.IO;
 using System.Net;
 using ItemSenseRDBMService;
-using System.Web.Script.Serialization;
 
 namespace ImpinjItemSenseRDBMService
 {
@@ -538,7 +536,12 @@ namespace ImpinjItemSenseRDBMService
             var message = Encoding.UTF8.GetString(body);
             try
             {
-                var msg = new JavaScriptSerializer().Deserialize<ThresholdRec>(message);
+                var settings = new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                };
+                var msg = JsonConvert.DeserializeObject<ThresholdRec>(message, settings);
 
                 ThresholdRec rec = new ThresholdRec();
                 rec.Epc = msg.Epc;
@@ -608,7 +611,13 @@ namespace ImpinjItemSenseRDBMService
             var message = Encoding.UTF8.GetString(body);
             try
             {
-                var msg = new JavaScriptSerializer().Deserialize<ItemEventRec>(message);
+                var settings = new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                };
+                var msg = JsonConvert.DeserializeObject<ItemEventRec>(message, settings);
+                //var msg = new JavaScriptSerializer().Deserialize<ItemEventRec>(message);
 
                 ItemEventRec rec = new ItemEventRec();
                 rec.Epc = msg.Epc;
